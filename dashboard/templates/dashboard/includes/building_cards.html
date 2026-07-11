@@ -1,0 +1,13 @@
+<div class="building-grid{% if large %} building-grid-large{% endif %}">
+  {% for building in buildings %}
+    <a class="building-card tone-{{ forloop.counter }}" href="{% url 'dashboard:building' building.slug %}">
+      <span class="building-symbol" aria-hidden="true">{{ building.name|slice:':1' }}</span>
+      <span class="building-copy">
+        <strong>{{ building.name }}</strong>
+        <span class="building-status"><span class="status-dot {{ building.category_class }}" aria-hidden="true"></span><span data-i18n="{{ building.category_class }}">{{ building.category }}</span> · {{ building.reporting }}/{{ building.total }} <span data-i18n="sensors">sensors</span></span>
+      </span>
+    </a>
+  {% empty %}
+    <p class="empty-state" data-i18n="noBuildings">No buildings are available yet.</p>
+  {% endfor %}
+</div>

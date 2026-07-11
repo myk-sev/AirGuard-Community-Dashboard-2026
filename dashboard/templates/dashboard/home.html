@@ -1,0 +1,39 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}AirGuard | Community indoor air{% endblock %}
+{% block content %}
+  <section class="page-inner" aria-labelledby="home-title">
+    <h1 id="home-title" data-i18n="communityStatus">Indoor air across participating buildings</h1>
+    <p class="lede" data-i18n="statusIntro">A simple view of conditions reported by AirGuard sensors in community spaces.</p>
+    <div class="status-banner {{ status.category_class }}">
+      <div>
+        {% if status.updated_at %}<p class="status-updated"><span data-i18n="updated">Updated</span> {{ status.updated_at|timesince }} <span data-i18n="ago">ago</span></p>{% endif %}
+        <div class="status-score"><strong>{{ status.aqi|default:'—' }}</strong><button class="aqi-button" type="button" data-open-aqi>AQI <span aria-hidden="true">?</span></button></div>
+        <p class="category-line"><span class="status-dot {{ status.category_class }}" aria-hidden="true"></span><span data-i18n="{{ status.category_class }}">{{ status.category }}</span></p>
+      </div>
+      <div>
+        <p class="status-message" data-i18n="statusMessage">Most people can continue normal activities. People sensitive to particle pollution may want to take it easier.</p>
+        <div class="status-meta">
+          <span><strong data-i18n="current">Current:</strong> {{ status.reporting }} <span data-i18n="of">of</span> {{ status.total }} <span data-i18n="reporting">sensors reporting</span></span>
+          <span><strong data-i18n="forecast">Forecast:</strong> <span data-i18n="{% if status.forecast_aqi <= 50 %}good{% elif status.forecast_aqi <= 100 %}moderate{% else %}sensitive{% endif %}">{{ status.forecast_category }}</span>{% if status.forecast_at %} {{ status.forecast_at|date:'g A' }}{% endif %}</span>
+        </div>
+      </div>
+    </div>
+    <div class="section-heading"><div><h2 data-i18n="chooseBuilding">Choose a building</h2><p data-i18n="buildingIntro">See readings from the gym, hallway, and entrance.</p></div><a class="button" href="{% url 'dashboard:readings' %}" data-i18n="allBuildings">All buildings</a></div>
+    {% include 'dashboard/includes/building_cards.html' %}
+  </section>
+{% endblock %}
+{% block dialogs %}
+  <dialog id="aqi-dialog" aria-labelledby="aqi-title">
+    <div class="dialog-header"><div><p class="eyebrow">Air Quality Index</p><h2 id="aqi-title" data-i18n="whatAqi">What does AQI mean?</h2></div><button class="icon-button" type="button" data-close-aqi aria-label="Close AQI information">×</button></div>
+    <div class="dialog-body">
+      <p data-i18n="aqiExplanation">AQI turns a PM2.5 measurement into a health category. A higher number means more particle pollution and a greater chance of health effects.</p>
+      <div class="aqi-scale" aria-label="AQI category examples">
+        <div class="aqi-row good"><strong>0–50</strong><span><b data-i18n="good">Good</b><br><span data-i18n="goodGuidance">Air quality is satisfactory for most people.</span></span></div>
+        <div class="aqi-row moderate"><strong>51–100</strong><span><b data-i18n="moderate">Moderate</b><br><span data-i18n="moderateGuidance">People unusually sensitive to particle pollution may notice effects.</span></span></div>
+        <div class="aqi-row sensitive"><strong>101–150</strong><span><b data-i18n="sensitive">Unhealthy for sensitive groups</b><br><span data-i18n="sensitiveGuidance">Children and people with heart or lung conditions should reduce prolonged exertion.</span></span></div>
+      </div>
+      <p class="muted" data-i18n="indoorNote">AirGuard applies AQI health categories to indoor low-cost sensor readings as community guidance. It is not a regulatory outdoor AQI report.</p>
+      <div class="dialog-actions"><button class="button button-primary" type="button" data-close-aqi data-i18n="close">Close</button></div>
+    </div>
+  </dialog>
+{% endblock %}

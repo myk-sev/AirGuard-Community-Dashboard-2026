@@ -1,0 +1,10 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Current readings | AirGuard{% endblock %}
+{% block content %}
+  <section class="page-inner" aria-labelledby="readings-title">
+    <h1 id="readings-title" data-i18n="currentReadingsTitle">Current readings</h1>
+    <p class="lede" data-i18n="readingsIntro">Select a participating building to view its indoor sensors.</p>
+    <div class="click-guidance"><span aria-hidden="true">↗</span><span data-i18n="clickBuilding">Click any building card to see readings from its gym, hallway, and entrance.</span></div>
+    {% include 'dashboard/includes/building_cards.html' with large=True %}
+  </section>
+{% endblock %}

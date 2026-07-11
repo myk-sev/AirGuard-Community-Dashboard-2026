@@ -1,0 +1,42 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}{{ building.name }} | AirGuard{% endblock %}
+{% block content %}
+  <section class="page-inner" aria-labelledby="building-title">
+    <a class="button button-quiet back-button" href="{% url 'dashboard:readings' %}">← <span data-i18n="backBuildings">Back to buildings</span></a>
+    <h1 id="building-title">{{ building.name }}</h1>
+    <p class="lede" data-i18n="buildingDetailIntro">Indoor PM2.5 readings from three shared spaces.</p>
+    <div class="sensor-grid">
+      {% for sensor in building.sensors %}
+        <button class="sensor-card" type="button" data-sensor-id="{{ sensor.id }}" data-sensor-name="{{ sensor.name }}" data-building-name="{{ building.name }}">
+          <strong data-i18n="{{ sensor.placement }}">{{ sensor.name }}</strong>
+          <span class="gauge {{ sensor.category_class }}" style="--gauge-value:{% if sensor.aqi %}{{ sensor.aqi }}{% else %}0{% endif %}" aria-hidden="true"><span><b>{{ sensor.aqi|default:'—' }}</b><small>AQI</small></span></span>
+          {% if sensor.pm25 %}<span>{{ sensor.pm25 }} µg/m³</span>{% endif %}
+          <span class="sensor-status"><span class="status-dot {{ sensor.category_class }}" aria-hidden="true"></span><span data-i18n="{{ sensor.category_class }}">{{ sensor.category }}</span></span>
+          {% if sensor.observed_at %}<time datetime="{{ sensor.observed_at|date:'c' }}">{{ sensor.observed_at|date:'g:i A' }}</time>{% endif %}
+        </button>
+      {% endfor %}
+    </div>
+    <div class="education-grid">
+      <section><h2 data-i18n="whatMeans">What this means</h2><p data-i18n="meansText">PM2.5 is made of tiny particles that can travel deep into the lungs. AQI turns the sensor reading into an easier health category.</p><a href="{% url 'dashboard:resources' %}" data-i18n="learnMore">Learn more</a></section>
+      <section><h2 data-i18n="whatDo">What you can do</h2><ul><li data-i18n="actionOne">Choose a lower-reading room when possible.</li><li data-i18n="actionTwo">People with asthma or heart conditions should follow their care plan.</li><li data-i18n="actionThree">Check again before strenuous activity.</li></ul></section>
+    </div>
+  </section>
+{% endblock %}
+{% block dialogs %}
+  <dialog id="sensor-dialog" aria-labelledby="sensor-dialog-title">
+    <div class="dialog-header"><div><p class="eyebrow" id="dialog-building"></p><h2 id="sensor-dialog-title"></h2><p id="dialog-current" class="muted"></p></div><button class="icon-button" type="button" data-close-sensor aria-label="Close sensor details">×</button></div>
+    <div class="dialog-tabs" role="tablist" aria-label="Sensor details"><button type="button" role="tab" aria-selected="true" aria-controls="history-panel" id="history-tab" data-tab="history" data-i18n="history">History</button><button type="button" role="tab" aria-selected="false" aria-controls="forecast-panel" id="forecast-tab" data-tab="forecast" data-i18n="forecast">Forecast</button></div>
+    <section class="dialog-panel active" id="history-panel" role="tabpanel" aria-labelledby="history-tab">
+      <div class="panel-toolbar"><div><h3 data-i18n="pmHistory">PM2.5 history</h3><p id="history-summary" class="muted" aria-live="polite"></p></div><label><span data-i18n="timeRange">Time range</span><select id="history-range"><option value="24h">24 hours</option><option value="7d">7 days</option><option value="30d">30 days</option></select></label></div>
+      <div class="chart-container"><svg id="history-chart" viewBox="0 0 760 280" role="img" aria-labelledby="history-chart-title history-chart-desc"><title id="history-chart-title">PM2.5 history chart</title><desc id="history-chart-desc">PM2.5 readings over the selected time range.</desc></svg></div>
+      <details><summary data-i18n="viewTable">View data table</summary><div class="table-wrap"><table><caption class="sr-only">PM2.5 readings</caption><thead><tr><th scope="col" data-i18n="time">Time</th><th scope="col">PM2.5</th><th scope="col">AQI</th><th scope="col" data-i18n="category">Category</th></tr></thead><tbody id="history-table"></tbody></table></div></details>
+      <div class="dialog-actions"><a class="button" id="download-link" href="#" data-i18n="downloadCsv">Download CSV</a></div>
+    </section>
+    <section class="dialog-panel" id="forecast-panel" role="tabpanel" aria-labelledby="forecast-tab">
+      <div class="forecast-callout"><h3 id="forecast-peak"></h3><p data-i18n="forecastAction">People sensitive to particle pollution should consider choosing a lower-reading room during the afternoon.</p></div>
+      <div class="weather-grid" id="weather-grid"></div>
+      <h3 data-i18n="next24">Next 24 hours</h3>
+      <div class="chart-container"><svg id="forecast-chart" viewBox="0 0 760 280" role="img" aria-labelledby="forecast-chart-title forecast-chart-desc"><title id="forecast-chart-title">PM2.5 forecast chart</title><desc id="forecast-chart-desc">Projected PM2.5 readings for the next 24 hours.</desc></svg></div>
+    </section>
+  </dialog>
+{% endblock %}
