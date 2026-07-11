@@ -3,11 +3,11 @@
     es: {
       skip: "Saltar al contenido principal", tagline: "El aire comunitario, más claro", language: "Idioma",
       home: "Inicio", readings: "Lecturas actuales", resources: "Recursos", signup: "Inscribirse",
-      sensorFooter: "Datos de sensores interiores de bajo costo para orientación comunitaria.",
+      sensorFooter: "Datos de sensores interiores de bajo costo para orientación comunitaria.", footerDescription: "Información práctica sobre el aire interior para edificios comunitarios participantes.", explore: "Explorar", learn: "Aprender",
       communityStatus: "Aire interior en edificios participantes", statusIntro: "Una vista sencilla de las condiciones reportadas por los sensores AirGuard en espacios comunitarios.",
       updated: "Actualizado", ago: "atrás", current: "Actual:", of: "de", reporting: "sensores reportando", forecast: "Pronóstico:",
       statusMessage: "La mayoría de las personas pueden continuar sus actividades normales. Las personas sensibles a la contaminación por partículas pueden reducir el esfuerzo.",
-      chooseBuilding: "Elija un edificio", buildingIntro: "Vea las lecturas del gimnasio, pasillo y entrada.", allBuildings: "Todos los edificios", sensors: "sensores",
+      chooseBuilding: "Resumen de edificios", buildingIntro: "Vea las lecturas del gimnasio, pasillo y entrada.", allBuildings: "Todos los edificios", sensors: "sensores",
       gym: "Gimnasio", hallway: "Pasillo", entrance: "Entrada", unavailable: "No disponible", unhealthy: "Insalubre", "very-unhealthy": "Muy insalubre", hazardous: "Peligroso",
       currentReadingsTitle: "Lecturas actuales", readingsIntro: "Seleccione un edificio participante para ver sus sensores interiores.", clickBuilding: "Seleccione cualquier tarjeta de edificio para ver las lecturas de su gimnasio, pasillo y entrada.",
       backBuildings: "Volver a edificios", buildingDetailIntro: "Lecturas interiores de PM2.5 de tres espacios compartidos.",
@@ -103,9 +103,11 @@
     document.querySelector("#forecast-peak").textContent = peak ? `${document.documentElement.lang === "es" ? "Pronóstico máximo" : "Peak forecast"}: ${localizedCategory(peak.category)} ${document.documentElement.lang === "es" ? "a las" : "at"} ${new Date(peak.timestamp).toLocaleTimeString([], { hour: "numeric" })}` : "Forecast unavailable";
     const first = forecasts[0];
     document.querySelector("#weather-grid").innerHTML = first ? [
-      ["Temperature", `${Math.round(first.temperature)} °F`], ["Relative humidity", `${first.relative_humidity}%`],
-      ["Wind speed", `${first.wind_speed.toFixed(1)} mph`], ["Wind direction", first.wind_direction]
-    ].map(([label, value]) => `<div class="weather-item"><small>${label}</small><strong>${value}</strong></div>`).join("") : "";
+      ["Temperature", `${Math.round(first.temperature)} °F`, "Temperature can affect indoor airflow and particle behavior."],
+      ["Relative humidity", `${first.relative_humidity}%`, "High humidity can influence some low-cost PM2.5 sensor readings."],
+      ["Wind speed", `${first.wind_speed.toFixed(1)} mph`, "Wind speed can change how outdoor particles move near entrances."],
+      ["Wind direction", first.wind_direction, "Wind direction helps explain where incoming outdoor air may come from."]
+    ].map(([label, value, caption]) => `<div class="weather-item"><small><abbr title="${caption}">${label}</abbr></small><strong>${value}</strong></div>`).join("") : "";
     drawChart(document.querySelector("#forecast-chart"), forecasts.map((item) => item.pm25), forecasts.map((item) => new Date(item.timestamp).toLocaleTimeString([], { hour: "numeric" })));
     forecastLoaded = true;
   }

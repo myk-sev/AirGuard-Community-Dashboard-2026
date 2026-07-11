@@ -1,10 +1,18 @@
 <div class="building-grid{% if large %} building-grid-large{% endif %}">
   {% for building in buildings %}
     <a class="building-card tone-{{ forloop.counter }}" href="{% url 'dashboard:building' building.slug %}">
-      <span class="building-symbol" aria-hidden="true">{{ building.name|slice:':1' }}</span>
+      <span class="building-symbol" aria-hidden="true">
+        {% if building.icon == 'landmark' %}
+          <svg viewBox="0 0 24 24"><path d="M3 22h18M6 18v-7m4 7v-7m4 7v-7m4 7v-7M4 7h16L12 2 4 7Z"/></svg>
+        {% elif building.icon == 'school' %}
+          <svg viewBox="0 0 24 24"><path d="M3 22V8l9-5 9 5v14M9 22v-5h6v5M7 11h2m6 0h2M7 14h2m6 0h2"/></svg>
+        {% else %}
+          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Zm0 0A2.5 2.5 0 0 0 6.5 22H20v-5M8 7h8m-8 4h7"/></svg>
+        {% endif %}
+      </span>
       <span class="building-copy">
         <strong>{{ building.name }}</strong>
-        <span class="building-status"><span class="status-dot {{ building.category_class }}" aria-hidden="true"></span><span data-i18n="{{ building.category_class }}">{{ building.category }}</span> · {{ building.reporting }}/{{ building.total }} <span data-i18n="sensors">sensors</span></span>
+        <span class="building-status"><span class="status-dot {{ building.category_class }}" aria-hidden="true"></span><span class="building-status-text"><span data-i18n="{{ building.category_class }}">{{ building.category }}</span> · {{ building.reporting }}/{{ building.total }} <span data-i18n="sensors">sensors</span></span></span>
       </span>
     </a>
   {% empty %}

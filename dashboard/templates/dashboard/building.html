@@ -4,13 +4,13 @@
   <section class="page-inner" aria-labelledby="building-title">
     <a class="button button-quiet back-button" href="{% url 'dashboard:readings' %}">← <span data-i18n="backBuildings">Back to buildings</span></a>
     <h1 id="building-title">{{ building.name }}</h1>
-    <p class="lede" data-i18n="buildingDetailIntro">Indoor PM2.5 readings from three shared spaces.</p>
+    <p class="lede" data-i18n="buildingDetailIntro">Indoor <abbr title="PM2.5 is fine particle pollution small enough to travel deep into the lungs.">PM2.5</abbr> readings from three shared spaces.</p>
     <div class="sensor-grid">
       {% for sensor in building.sensors %}
         <button class="sensor-card" type="button" data-sensor-id="{{ sensor.id }}" data-sensor-name="{{ sensor.name }}" data-building-name="{{ building.name }}">
           <strong data-i18n="{{ sensor.placement }}">{{ sensor.name }}</strong>
           <span class="gauge {{ sensor.category_class }}" style="--gauge-value:{% if sensor.aqi %}{{ sensor.aqi }}{% else %}0{% endif %}" aria-hidden="true"><span><b>{{ sensor.aqi|default:'—' }}</b><small>AQI</small></span></span>
-          {% if sensor.pm25 %}<span>{{ sensor.pm25 }} µg/m³</span>{% endif %}
+          {% if sensor.pm25 %}<span><abbr title="PM2.5 is fine particle pollution small enough to travel deep into the lungs.">PM2.5</abbr> {{ sensor.pm25 }} <abbr title="Micrograms per cubic meter: the mass of particles measured in a volume of air.">µg/m³</abbr></span>{% endif %}
           <span class="sensor-status"><span class="status-dot {{ sensor.category_class }}" aria-hidden="true"></span><span data-i18n="{{ sensor.category_class }}">{{ sensor.category }}</span></span>
           {% if sensor.observed_at %}<time datetime="{{ sensor.observed_at|date:'c' }}">{{ sensor.observed_at|date:'g:i A' }}</time>{% endif %}
         </button>

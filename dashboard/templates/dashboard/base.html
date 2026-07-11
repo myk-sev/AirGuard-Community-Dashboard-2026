@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Community indoor PM2.5 readings, forecasts, and health guidance.">
   <title>{% block title %}AirGuard{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}">
-  <script defer src="{% static 'dashboard/app.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}?v=3">
+  <script defer src="{% static 'dashboard/app.js' %}?v=3"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
@@ -36,7 +36,32 @@
     </div>
   </header>
   <main id="main" class="page-shell">{% block content %}{% endblock %}</main>
-  <footer class="site-footer"><span>AirGuard</span><span data-i18n="sensorFooter">Indoor low-cost sensor data for community guidance.</span></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <section class="footer-about" aria-labelledby="footer-about-title">
+        <h2 id="footer-about-title">AirGuard</h2>
+        <p data-i18n="footerDescription">Practical indoor air information for participating community buildings.</p>
+        <p class="footer-data-note" data-i18n="sensorFooter">Indoor low-cost sensor data for community guidance.</p>
+      </section>
+      <nav aria-labelledby="footer-explore-title">
+        <h2 id="footer-explore-title" data-i18n="explore">Explore</h2>
+        <ul>
+          <li><a href="{% url 'dashboard:home' %}" data-i18n="home">Home</a></li>
+          <li><a href="{% url 'dashboard:readings' %}" data-i18n="readings">Current readings</a></li>
+          <li><a href="{% url 'dashboard:resources' %}" data-i18n="resources">Resources</a></li>
+          <li><a href="{% url 'dashboard:notifications' %}" data-i18n="signup">Sign up</a></li>
+        </ul>
+      </nav>
+      <nav aria-labelledby="footer-learn-title">
+        <h2 id="footer-learn-title" data-i18n="learn">Learn</h2>
+        <ul>
+          <li><a href="https://www.airnow.gov/aqi/aqi-basics/">AirNow AQI basics</a></li>
+          <li><a href="https://www.epa.gov/pm-pollution/particulate-matter-pm-basics">EPA PM2.5 basics</a></li>
+          <li><a href="https://www.chawisconsin.org/initiatives/environmental-health/love-my-air/">Love My Air Wisconsin</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
   {% block dialogs %}{% endblock %}
 </body>
 </html>

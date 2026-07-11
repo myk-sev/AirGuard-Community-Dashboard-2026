@@ -18,7 +18,7 @@
         </div>
       </div>
     </div>
-    <div class="section-heading"><div><h2 data-i18n="chooseBuilding">Choose a building</h2><p data-i18n="buildingIntro">See readings from the gym, hallway, and entrance.</p></div><a class="button" href="{% url 'dashboard:readings' %}" data-i18n="allBuildings">All buildings</a></div>
+    <div class="section-heading"><div><h2 data-i18n="chooseBuilding">Building Overview</h2><p data-i18n="buildingIntro">See readings from the gym, hallway, and entrance.</p></div><a class="button all-buildings-button" href="{% url 'dashboard:readings' %}"><span data-i18n="allBuildings">All buildings</span><span aria-hidden="true">→</span></a></div>
     {% include 'dashboard/includes/building_cards.html' %}
   </section>
 {% endblock %}
