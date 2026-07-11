@@ -830,13 +830,14 @@ html&gt;body{padding:0}&lt;/style&gt;
     #airguard-prototype .site-nav {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       overflow-x: auto;
       padding-bottom: 10px;
     }
     #airguard-prototype .nav-button {
       border: 0;
-      border-bottom: 3px solid transparent;
+      border-radius: 4px;
       padding: 9px 12px;
       background: transparent;
       color: var(--foreground);
@@ -844,7 +845,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       cursor: pointer;
     }
     #airguard-prototype .nav-button[aria-current=&quot;page&quot;] {
-      border-bottom-color: var(--ag-blue);
+      background: color-mix(in srgb, var(--viz-series-1) 18%, var(--background));
       font-weight: 500;
     }
     #airguard-prototype .page {
@@ -892,6 +893,22 @@ html&gt;body{padding:0}&lt;/style&gt;
       line-height: 1;
     }
     #airguard-prototype .score-unit { color: var(--muted-foreground); }
+    #airguard-prototype .status-updated {
+      margin-bottom: 12px;
+      color: var(--foreground);
+      font-size: 13px;
+    }
+    #airguard-prototype .aqi-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 7px 9px;
+      background: color-mix(in srgb, var(--viz-series-1) 10%, var(--background));
+      color: var(--foreground);
+      cursor: pointer;
+    }
     #airguard-prototype .status-label {
       display: inline-flex;
       align-items: center;
@@ -1010,6 +1027,15 @@ html&gt;body{padding:0}&lt;/style&gt;
       font-size: 18px;
     }
     #airguard-prototype .readings-grid .building-status { justify-content: center; }
+    #airguard-prototype .click-guidance {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0;
+      padding: 14px 16px;
+      border-left: 6px solid var(--viz-series-1);
+      background: color-mix(in srgb, var(--viz-series-1) 10%, var(--background));
+    }
     #airguard-prototype .back-button { margin-bottom: 22px; }
     #airguard-prototype .sensor-card {
       display: grid;
@@ -1085,6 +1111,29 @@ html&gt;body{padding:0}&lt;/style&gt;
     #airguard-prototype .resource-group {
       padding: 24px 0;
       border-bottom: 1px solid var(--border);
+    }
+    #airguard-prototype .resource-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #airguard-prototype .resource-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 22px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    #airguard-prototype .resource-links a {
+      display: inline-flex;
+      align-items: start;
+      gap: 7px;
+    }
+    #airguard-prototype .resource-note {
+      margin-top: 22px;
+      padding: 18px;
+      background: color-mix(in srgb, var(--viz-series-3) 16%, var(--background));
     }
     #airguard-prototype dialog {
       width: min(900px, calc(100% - 28px));
@@ -1214,6 +1263,24 @@ html&gt;body{padding:0}&lt;/style&gt;
       gap: 10px;
       margin-top: 18px;
     }
+    #airguard-prototype .aqi-dialog-body { padding: 22px; }
+    #airguard-prototype .aqi-scale {
+      display: grid;
+      gap: 8px;
+      margin: 20px 0;
+    }
+    #airguard-prototype .aqi-scale-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 10px 12px;
+      border-left: 8px solid var(--ag-good);
+      background: color-mix(in srgb, var(--ag-good) 9%, var(--card));
+    }
+    #airguard-prototype .aqi-scale-row.moderate { border-left-color: var(--ag-moderate); background: color-mix(in srgb, var(--ag-moderate) 9%, var(--card)); }
+    #airguard-prototype .aqi-scale-row.sensitive { border-left-color: var(--ag-sensitive); background: color-mix(in srgb, var(--ag-sensitive) 9%, var(--card)); }
+    #airguard-prototype .aqi-range { font-weight: 500; }
     #airguard-prototype .sr-only {
       position: absolute;
       width: 1px;
@@ -1229,6 +1296,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       #airguard-prototype .header-inner,
       #airguard-prototype .page-inner { padding: 0 16px; }
       #airguard-prototype .header-top { align-items: start; }
+      #airguard-prototype .site-nav { justify-content: flex-start; }
       #airguard-prototype .brand-tagline { display: none; }
       #airguard-prototype h1 { font-size: 30px; }
       #airguard-prototype .status-band { grid-template-columns: 1fr; padding: 22px; }
@@ -1236,6 +1304,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       #airguard-prototype .sensor-grid { grid-template-columns: 1fr; }
       #airguard-prototype .education,
       #airguard-prototype .field-grid { grid-template-columns: 1fr; }
+      #airguard-prototype .resource-links { grid-template-columns: 1fr; }
       #airguard-prototype .field-full { grid-column: auto; }
       #airguard-prototype .panel-toolbar { align-items: stretch; flex-direction: column; }
       #airguard-prototype .weather-row { grid-template-columns: 1fr 1fr; }
@@ -1294,13 +1363,13 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;main id=&quot;ag-main&quot;&gt;
       &lt;section class=&quot;page is-active&quot; data-view=&quot;home&quot; aria-labelledby=&quot;home-title&quot;&gt;
         &lt;div class=&quot;page-inner&quot;&gt;
-          &lt;p class=&quot;eyebrow&quot; data-i18n=&quot;updated&quot;&gt;Updated 10 minutes ago&lt;/p&gt;
           &lt;h1 id=&quot;home-title&quot; data-i18n=&quot;communityStatus&quot;&gt;Indoor air across participating buildings&lt;/h1&gt;
           &lt;p class=&quot;lede&quot; data-i18n=&quot;statusIntro&quot;&gt;A simple view of conditions reported by AirGuard sensors in community spaces.&lt;/p&gt;
 
           &lt;div class=&quot;status-band&quot;&gt;
             &lt;div&gt;
-              &lt;div class=&quot;status-score&quot;&gt;&lt;span class=&quot;score-number&quot;&gt;54&lt;/span&gt;&lt;span class=&quot;score-unit&quot;&gt;AQI&lt;/span&gt;&lt;/div&gt;
+              &lt;p class=&quot;status-updated&quot; data-i18n=&quot;updated&quot;&gt;Updated 10 minutes ago&lt;/p&gt;
+              &lt;div class=&quot;status-score&quot;&gt;&lt;span class=&quot;score-number&quot;&gt;54&lt;/span&gt;&lt;button class=&quot;aqi-trigger&quot; type=&quot;button&quot; data-open-aqi&gt;AQI &lt;i data-lucide=&quot;circle-help&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;
               &lt;div class=&quot;status-label&quot;&gt;&lt;span class=&quot;status-dot&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;span data-i18n=&quot;moderate&quot;&gt;Moderate&lt;/span&gt;&lt;/div&gt;
             &lt;/div&gt;
             &lt;div&gt;
@@ -1328,6 +1397,7 @@ html&gt;body{padding:0}&lt;/style&gt;
           &lt;p class=&quot;eyebrow&quot; data-i18n=&quot;updated&quot;&gt;Updated 10 minutes ago&lt;/p&gt;
           &lt;h1 id=&quot;readings-title&quot; data-i18n=&quot;currentReadingsTitle&quot;&gt;Current readings&lt;/h1&gt;
           &lt;p class=&quot;lede&quot; data-i18n=&quot;readingsIntro&quot;&gt;Select a participating building to view its indoor sensors.&lt;/p&gt;
+          &lt;div class=&quot;click-guidance&quot;&gt;&lt;i data-lucide=&quot;mouse-pointer-click&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span data-i18n=&quot;clickBuilding&quot;&gt;Click any building card to see readings from its gym, hallway, and entrance.&lt;/span&gt;&lt;/div&gt;
           &lt;div class=&quot;building-grid readings-grid&quot; data-building-grid&gt;&lt;/div&gt;
         &lt;/div&gt;
       &lt;/section&gt;
@@ -1376,25 +1446,44 @@ html&gt;body{padding:0}&lt;/style&gt;
       &lt;section class=&quot;page&quot; data-view=&quot;resources&quot; aria-labelledby=&quot;resources-title&quot;&gt;
         &lt;div class=&quot;page-inner&quot;&gt;
           &lt;h1 id=&quot;resources-title&quot; data-i18n=&quot;resourcesTitle&quot;&gt;Air quality resources&lt;/h1&gt;
-          &lt;p class=&quot;lede&quot; data-i18n=&quot;resourcesIntro&quot;&gt;Trusted guidance for understanding PM2.5, AQI, and practical health actions.&lt;/p&gt;
+          &lt;p class=&quot;lede&quot; data-i18n=&quot;resourcesIntro&quot;&gt;Activities, stories, health guidance, and practical tools for families, students, and community groups.&lt;/p&gt;
           &lt;section class=&quot;resource-group&quot;&gt;
-            &lt;h2 data-i18n=&quot;understanding&quot;&gt;Understanding the numbers&lt;/h2&gt;
-            &lt;ul class=&quot;resource-list&quot;&gt;
-              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/aqi/aqi-basics/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;AirNow AQI basics&lt;/a&gt;&lt;/li&gt;
-              &lt;li&gt;&lt;a href=&quot;https://www.epa.gov/pm-pollution/particulate-matter-pm-basics&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;EPA particulate matter basics&lt;/a&gt;&lt;/li&gt;
+            &lt;h2 class=&quot;resource-heading&quot;&gt;&lt;i data-lucide=&quot;graduation-cap&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span data-i18n=&quot;learnTeach&quot;&gt;Learn and teach&lt;/span&gt;&lt;/h2&gt;
+            &lt;ul class=&quot;resource-links&quot;&gt;
+              &lt;li&gt;&lt;a href=&quot;https://vimeo.com/1105904495&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;play-circle&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Basics of Air Quality video&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.chawisconsin.org/initiatives/environmental-health/love-my-air/#dcb73d7d4651f651f&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;notebook-tabs&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Air Quality Lessons &amp; Activities&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.chawisconsin.org/download/real-time-air-quality-observations-english/?wpdmdl=28712&amp;masterkey=OoSyL8FrWVhQ23zOBErgEl_sMY2xbTnxAzLXttJPkwxN25zGvg9qK5QuXgdovAnDPxTHvNJKCj7UntbDvBpNWR8VHW8mlOavYLPEgy05smJE&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;clipboard-list&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Real-time air quality observations&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.chawisconsin.org/download/love-my-air-sensor-dashboard-teaching-sheet/?wpdmdl=28645&amp;masterkey=e1WFEYJDgDr3lb92pM2PotIgEAh5FNeJVsCpQKecRO7pbScXcUf8RP36Zc01AEqYF1_tm31zvE3BMkUFkHzTh1ur2er2DOclPzC6GdtvNxM&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;presentation&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Sensor dashboard teaching sheet&lt;/a&gt;&lt;/li&gt;
             &lt;/ul&gt;
           &lt;/section&gt;
           &lt;section class=&quot;resource-group&quot;&gt;
-            &lt;h2 data-i18n=&quot;protectHealth&quot;&gt;Protecting your health&lt;/h2&gt;
-            &lt;ul class=&quot;resource-list&quot;&gt;
-              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/aqi/action-days/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;AirNow action guidance&lt;/a&gt;&lt;/li&gt;
-              &lt;li&gt;&lt;a href=&quot;https://www.dhs.wisconsin.gov/climate/air.htm&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Love My Air Wisconsin&lt;/a&gt;&lt;/li&gt;
+            &lt;h2 class=&quot;resource-heading&quot;&gt;&lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span data-i18n=&quot;familiesKids&quot;&gt;For families and kids&lt;/span&gt;&lt;/h2&gt;
+            &lt;ul class=&quot;resource-links&quot;&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/sites/default/files/2020-01/why-is-coco-orange-november-2019_1.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;book-heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Why is Coco Orange? (English)&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/sites/default/files/2018-08/cocos-orange-day_sp.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;book-heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;¿Por qué Coco está naranja? (Español)&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://document.airnow.gov/why-is-coco-red.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;book-heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Why is Coco Red? (English)&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://document.airnow.gov/why-is-coco-red-en-espa%C3%B1ol.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;book-heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;¿Por qué Coco está rojo? (Español)&lt;/a&gt;&lt;/li&gt;
             &lt;/ul&gt;
           &lt;/section&gt;
           &lt;section class=&quot;resource-group&quot;&gt;
-            &lt;h2 data-i18n=&quot;sensorLimits&quot;&gt;About these sensors&lt;/h2&gt;
-            &lt;p data-i18n=&quot;sensorLimitsText&quot;&gt;AirGuard uses indoor low-cost sensors for community guidance. These readings are not regulatory ambient-air measurements.&lt;/p&gt;
+            &lt;h2 class=&quot;resource-heading&quot;&gt;&lt;i data-lucide=&quot;megaphone&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span data-i18n=&quot;communityAction&quot;&gt;Community action&lt;/span&gt;&lt;/h2&gt;
+            &lt;ul class=&quot;resource-links&quot;&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/air-quality-flag-program/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;flag&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;EPA Air Quality Flag Program&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.epa.gov/schools/idle-free-schools-toolkit-healthy-school-environment&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;bus&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Idle-Free Schools Toolkit&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.chawisconsin.org/download/air-quality-morning-announcements/?wpdmdl=28735&amp;ind=1775588692024&amp;refresh=570a0312&amp;filename=Air-Quality-Morning-Announcements.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;mic-2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Air Quality Morning Announcements&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.dhs.wisconsin.gov/climate/lma-air-quality-policy-guide.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;file-text&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Air Quality Policy Templates&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
           &lt;/section&gt;
+          &lt;section class=&quot;resource-group&quot;&gt;
+            &lt;h2 class=&quot;resource-heading&quot;&gt;&lt;i data-lucide=&quot;heart-pulse&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span data-i18n=&quot;healthGuidance&quot;&gt;Health and AQI guidance&lt;/span&gt;&lt;/h2&gt;
+            &lt;ul class=&quot;resource-links&quot;&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/air-quality-and-your-health-publications/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;heart-handshake&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Air Quality and Health Publications&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.airnow.gov/sites/default/files/2018-04/aqi_brochure_02_14_0.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;gauge&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;A Guide to AQI and Your Health&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.dhs.wisconsin.gov/asthma/ashp.htm&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;house-heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Asthma-Safe Homes Program&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href=&quot;https://www.chawisconsin.org/initiatives/environmental-health/wisconsin-asthma-coalition/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;&lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Wisconsin Asthma Coalition&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/section&gt;
+          &lt;div class=&quot;resource-note&quot;&gt;&lt;strong data-i18n=&quot;sensorLimits&quot;&gt;About these sensors:&lt;/strong&gt; &lt;span data-i18n=&quot;sensorLimitsText&quot;&gt;AirGuard uses indoor low-cost sensors for community guidance. These readings are not regulatory ambient-air measurements.&lt;/span&gt;&lt;/div&gt;
         &lt;/div&gt;
       &lt;/section&gt;
 
@@ -1433,6 +1522,26 @@ html&gt;body{padding:0}&lt;/style&gt;
         &lt;/div&gt;
       &lt;/section&gt;
     &lt;/main&gt;
+
+    &lt;dialog id=&quot;aqi-dialog&quot; aria-labelledby=&quot;aqi-dialog-title&quot;&gt;
+      &lt;div class=&quot;dialog-header&quot;&gt;
+        &lt;div&gt;
+          &lt;p class=&quot;eyebrow&quot;&gt;Air Quality Index&lt;/p&gt;
+          &lt;h2 id=&quot;aqi-dialog-title&quot; data-i18n=&quot;whatAqi&quot;&gt;What does AQI mean?&lt;/h2&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;icon-button&quot; type=&quot;button&quot; data-close-aqi aria-label=&quot;Close AQI information&quot;&gt;&lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;aqi-dialog-body&quot;&gt;
+        &lt;p data-i18n=&quot;aqiExplanation&quot;&gt;AQI turns a PM2.5 measurement into a health category. A higher number means more particle pollution and a greater chance of health effects.&lt;/p&gt;
+        &lt;div class=&quot;aqi-scale&quot; aria-label=&quot;AQI category examples&quot;&gt;
+          &lt;div class=&quot;aqi-scale-row&quot;&gt;&lt;span class=&quot;aqi-range&quot;&gt;0–50&lt;/span&gt;&lt;span&gt;&lt;strong data-i18n=&quot;good&quot;&gt;Good&lt;/strong&gt;&lt;br&gt;&lt;span data-i18n=&quot;goodGuidance&quot;&gt;Air quality is satisfactory for most people.&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;aqi-scale-row moderate&quot;&gt;&lt;span class=&quot;aqi-range&quot;&gt;51–100&lt;/span&gt;&lt;span&gt;&lt;strong data-i18n=&quot;moderate&quot;&gt;Moderate&lt;/strong&gt;&lt;br&gt;&lt;span data-i18n=&quot;moderateGuidance&quot;&gt;People unusually sensitive to particle pollution may notice effects.&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;aqi-scale-row sensitive&quot;&gt;&lt;span class=&quot;aqi-range&quot;&gt;101–150&lt;/span&gt;&lt;span&gt;&lt;strong data-i18n=&quot;sensitive&quot;&gt;Unhealthy for sensitive groups&lt;/strong&gt;&lt;br&gt;&lt;span data-i18n=&quot;sensitiveGuidance&quot;&gt;Children and people with heart or lung conditions should reduce prolonged exertion.&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;p class=&quot;text-muted&quot; data-i18n=&quot;indoorNote&quot;&gt;AirGuard applies AQI health categories to indoor low-cost sensor readings as community guidance. It is not a regulatory outdoor AQI report.&lt;/p&gt;
+        &lt;div class=&quot;dialog-actions&quot;&gt;&lt;button class=&quot;btn btn-primary&quot; type=&quot;button&quot; data-close-aqi data-i18n=&quot;close&quot;&gt;Close&lt;/button&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/dialog&gt;
 
     &lt;dialog id=&quot;sensor-dialog&quot; aria-labelledby=&quot;sensor-dialog-title&quot;&gt;
       &lt;div class=&quot;dialog-header&quot;&gt;
@@ -1511,6 +1620,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       const pages = [...root.querySelectorAll(&quot;[data-view]&quot;)];
       const navButtons = [...root.querySelectorAll(&quot;.nav-button&quot;)];
       const dialog = root.querySelector(&quot;#sensor-dialog&quot;);
+      const aqiDialog = root.querySelector(&quot;#aqi-dialog&quot;);
       const buildingNames = [&quot;Riverside Community Center&quot;, &quot;Eastview School&quot;, &quot;Northside Library&quot;];
       const buildingIcons = [&quot;landmark&quot;, &quot;school&quot;, &quot;library&quot;];
       const buildingStatuses = [
@@ -1530,14 +1640,15 @@ html&gt;body{padding:0}&lt;/style&gt;
           sensitive: &quot;Insalubre para grupos sensibles&quot;, byThree: &quot;a las 3 p. m.&quot;, chooseBuilding: &quot;Elija un edificio&quot;,
           buildingIntro: &quot;Vea las lecturas del gimnasio, pasillo y entrada.&quot;, allBuildings: &quot;Todos los edificios&quot;,
           currentReadingsTitle: &quot;Lecturas actuales&quot;, readingsIntro: &quot;Seleccione un edificio participante para ver sus sensores interiores.&quot;,
+          clickBuilding: &quot;Seleccione cualquier tarjeta de edificio para ver las lecturas de su gimnasio, pasillo y entrada.&quot;,
           backBuildings: &quot;Volver a edificios&quot;, buildingDetailIntro: &quot;Lecturas interiores de PM2.5 de tres espacios compartidos.&quot;,
           gym: &quot;Gimnasio&quot;, hallway: &quot;Pasillo&quot;, entrance: &quot;Entrada&quot;, good: &quot;Bueno&quot;,
           whatMeans: &quot;Qué significa&quot;, meansText: &quot;PM2.5 está compuesto por partículas diminutas que pueden penetrar profundamente en los pulmones. El AQI convierte la lectura en una categoría de salud más fácil de entender.&quot;,
           learnMore: &quot;Más información&quot;, whatDo: &quot;Qué puede hacer&quot;, actionOne: &quot;Elija una sala con una lectura más baja cuando sea posible.&quot;,
           actionTwo: &quot;Las personas con asma o afecciones cardíacas deben seguir su plan de atención.&quot;,
           actionThree: &quot;Revise nuevamente antes de realizar actividad intensa.&quot;, resourcesTitle: &quot;Recursos sobre la calidad del aire&quot;,
-          resourcesIntro: &quot;Orientación confiable para comprender PM2.5, AQI y las medidas prácticas de salud.&quot;,
-          understanding: &quot;Comprender los números&quot;, protectHealth: &quot;Proteger su salud&quot;, sensorLimits: &quot;Acerca de estos sensores&quot;,
+          resourcesIntro: &quot;Actividades, cuentos, orientación de salud y herramientas prácticas para familias, estudiantes y grupos comunitarios.&quot;,
+          learnTeach: &quot;Aprender y enseñar&quot;, familiesKids: &quot;Para familias y niños&quot;, communityAction: &quot;Acción comunitaria&quot;, healthGuidance: &quot;Salud y orientación sobre el AQI&quot;, sensorLimits: &quot;Acerca de estos sensores&quot;,
           sensorLimitsText: &quot;AirGuard utiliza sensores interiores de bajo costo como orientación comunitaria. Estas lecturas no son mediciones reglamentarias del aire ambiente.&quot;,
           signupTitle: &quot;Reciba notificaciones sobre la calidad del aire&quot;, signupIntro: &quot;Elija un edificio y el nivel de AQI para recibir una notificación.&quot;,
           email: &quot;Correo electrónico&quot;, building: &quot;Edificio&quot;, notifyAt: &quot;Notificarme en&quot;, moderateAbove: &quot;Moderado o superior&quot;,
@@ -1550,7 +1661,10 @@ html&gt;body{padding:0}&lt;/style&gt;
           time: &quot;Hora&quot;, category: &quot;Categoría&quot;, downloadCsv: &quot;Descargar CSV&quot;, peakForecast: &quot;Pronóstico máximo: insalubre para grupos sensibles a las 3 p. m.&quot;,
           forecastAction: &quot;Las personas sensibles a la contaminación por partículas deberían considerar una sala con una lectura más baja durante la tarde.&quot;,
           temperature: &quot;Temperatura&quot;, humidity: &quot;Humedad relativa&quot;, windSpeed: &quot;Velocidad del viento&quot;, windDirection: &quot;Dirección del viento&quot;,
-          next24: &quot;Próximas 24 horas&quot;, forecastUpdated: &quot;Pronóstico actualizado a las 10 a. m.&quot;
+          next24: &quot;Próximas 24 horas&quot;, forecastUpdated: &quot;Pronóstico actualizado a las 10 a. m.&quot;,
+          whatAqi: &quot;¿Qué significa AQI?&quot;, aqiExplanation: &quot;El AQI convierte una medición de PM2.5 en una categoría de salud. Un número más alto significa más contaminación por partículas y una mayor posibilidad de efectos en la salud.&quot;,
+          goodGuidance: &quot;La calidad del aire es satisfactoria para la mayoría de las personas.&quot;, moderateGuidance: &quot;Las personas inusualmente sensibles a la contaminación por partículas pueden notar efectos.&quot;,
+          sensitiveGuidance: &quot;Los niños y las personas con afecciones cardíacas o pulmonares deben reducir el esfuerzo prolongado.&quot;, indoorNote: &quot;AirGuard aplica categorías de salud del AQI a lecturas de sensores interiores de bajo costo como orientación comunitaria. No es un informe reglamentario del AQI exterior.&quot;, close: &quot;Cerrar&quot;
         }
       };
 
@@ -1596,6 +1710,14 @@ html&gt;body{padding:0}&lt;/style&gt;
         }
       });
       root.querySelector(&quot;[data-close-dialog]&quot;).addEventListener(&quot;click&quot;, () =&gt; dialog.close());
+      root.querySelector(&quot;[data-open-aqi]&quot;).addEventListener(&quot;click&quot;, () =&gt; {
+        try {
+          aqiDialog.showModal();
+        } catch {
+          aqiDialog.setAttribute(&quot;open&quot;, &quot;&quot;);
+        }
+      });
+      root.querySelectorAll(&quot;[data-close-aqi]&quot;).forEach((button) =&gt; button.addEventListener(&quot;click&quot;, () =&gt; aqiDialog.close()));
 
       root.querySelectorAll(&quot;[data-dialog-tab]&quot;).forEach((tab) =&gt; {
         tab.addEventListener(&quot;click&quot;, () =&gt; {
