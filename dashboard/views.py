@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 from statistics import median
 
+from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -13,6 +14,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from .aqi import aqi_category, nowcast, pm25_to_aqi
 from .forms import SubscriptionForm
 from .models import Building, Forecast, Sensor, Subscription
+from .csv_cat import concatenate
 
 
 STALE_AFTER = timedelta(minutes=15)
@@ -209,3 +211,31 @@ def subscription_api(request):
     except (Building.DoesNotExist, KeyError, TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({"error": "Invalid subscription"}, status=400)
     return JsonResponse({"id": subscription.id, "saved": True})
+
+# NOTE: This can be esily modified to not need building and location passed through
+@require_POST
+def measurements(request, building, location):
+    form = UploadFileForm(request.POST, request.FILES)
+
+    if form.is_valid():
+        # TODO:read file **in chunks** to long-term csv
+        # (maybe) read long-term csv to database
+
+        file = default_storage.save("temp_measurements_{}_{}.csv".format(building, location), request.FILES["file"])
+        data = csv.DictReader(file)
+
+        # FIXME: could possibly error if historical_measurements.csv does not exist
+        csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
+
+        # TODO: pull from POST
+        # TODO: pull from database
+        sensor = Sensor.objects.create(
+                    building=building,
+                    name=location,
+                    placement=location,
+                    external_id=f"{building}-{placement}",
+                )
+
+        observed_at = data.get("time")
+        pm25 = data.get("PM2.5(µg/m³)")
+        reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
