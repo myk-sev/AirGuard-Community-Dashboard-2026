@@ -17,7 +17,7 @@ from .models import Building, Forecast, Sensor, Subscription
 from .csv_cat import concatenate
 
 
-STALE_AFTER = timedelta(minutes=15)
+STALE_AFTER = timedelta(minutes=60)
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 
 
@@ -25,7 +25,6 @@ def _sensor_snapshot(sensor, now=None):
     aqi = None
     now = now or timezone.now()
     readings = list(sensor.readings.order_by("-observed_at")[:12])
-    # BUG: For some reason related to populating the database, the readings for one specific sensor are correct but saying they occurred 3 hours before they actually occurred
     latest = readings[0] if readings else None
     stale = not latest or now - latest.observed_at > STALE_AFTER
 

@@ -1,3 +1,6 @@
+import pandas as pd
+
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -23,6 +26,7 @@ class Command(BaseCommand):
 
         now = timezone.now().replace(second=0, microsecond=0)
         sensors = []
+        # TODO: store this outside of code
         for building_index, (name, slug, icon) in enumerate(BUILDINGS):
             building = Building.objects.create(name=name, slug=slug, icon=icon, display_order=building_index)
             for placement_index, (placement, label) in enumerate(PLACEMENTS):
@@ -36,6 +40,13 @@ class Command(BaseCommand):
 
         # TODO: read csv to database
 
+        readings = []
+
+        # HACK: this could be done a little cleaner. try figuring out how to make the pandas and django file systems work together
+        df = pd.read_csv(default_storage.path("historical_measurements.csv"), index_col=False, header=0) # use defualt_storage path with pandas opening
+        for
+        # read dataframe data to individual objects
+        # bulk create objects in sqlite
         # readings = []
         # for sensor, building_index, placement_index in sensors:
         #     stale = building_index == 2 and placement_index == 2
