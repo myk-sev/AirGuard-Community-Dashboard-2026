@@ -17,6 +17,7 @@ PLACEMENTS = (("gym", "Gym"), ("hallway", "Hallway"), ("entrance", "Entrance"))
 
 
 class Command(BaseCommand):
+    # NOTE: the demo will not load data for the last 3 hours on one of the sensors
     help = "Create deterministic AirGuard development data"
 
     def handle(self, *args, **options):

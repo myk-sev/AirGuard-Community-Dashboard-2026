@@ -22,12 +22,17 @@ RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 
 
 def _sensor_snapshot(sensor, now=None):
+    aqi = None
     now = now or timezone.now()
     readings = list(sensor.readings.order_by("-observed_at")[:12])
+    # BUG: For some reason related to populating the database, the readings for one specific sensor are correct but saying they occurred 3 hours before they actually occurred
     latest = readings[0] if readings else None
     stale = not latest or now - latest.observed_at > STALE_AFTER
-    concentration = None if stale else nowcast([reading.pm25 for reading in readings])
-    aqi = None if concentration is None else pm25_to_aqi(concentration)
+
+    if not stale:
+        concentration = nowcast([reading.pm25 for reading in readings])
+        aqi = pm25_to_aqi(concentration)
+
     category = aqi_category(aqi) if aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
     return {
         "id": sensor.id,
@@ -65,6 +70,7 @@ def _building_summary(building, now=None):
 def _network_status():
     now = timezone.now()
     snapshots = [_sensor_snapshot(sensor, now) for sensor in Sensor.objects.select_related("building")]
+    print(snapshots)
     valid = [sensor["aqi"] for sensor in snapshots if sensor["aqi"] is not None]
     total = len(snapshots)
     current_aqi = round(median(valid)) if len(valid) >= (total + 1) // 2 and valid else None

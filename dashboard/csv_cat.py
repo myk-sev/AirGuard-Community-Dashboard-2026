@@ -7,17 +7,20 @@ def concatenate(input: String, output: String) -> void:
     new_file: DataFrame = pd.read_csv(input, index_col=False, header=0)
     old_file: DataFrame = pd.read_csv(output, index_col=False, header=0)
 
-    # TODO: specify pre-conversion time formats
     if 'Timestamp for sample frequency every 1 min min' in new_file.columns:
         new_file["Time"] = pd.to_datetime(new_file['Timestamp for sample frequency every 1 min min'])
         new_file.drop(columns=['Timestamp for sample frequency every 1 min min'], inplace=True)
 
     if 'Time(DD/MM/YYYY h:mm:ss A)' in new_file.columns:
-        new_file["Time"] = pd.to_datetime(new_file['Time(DD/MM/YYYY h:mm:ss A)'])
+        new_file["Time"] = pd.to_datetime(new_file['Time(DD/MM/YYYY h:mm:ss A)'], format = "%d/%m/%Y %I:%M:%S %p")
         new_file.drop(columns=['Time(DD/MM/YYYY h:mm:ss A)'], inplace=True)
 
     if 'Sensor name' not in new_file.columns:
-        new_file.loc[:, "Sensor name"] = Path(i).name.split('.')[0]
+        # NOTE: Does not work with Aranet naming scheme
+        name = Path(i).name.split('_')[0]
+        new_file.loc[:, "Sensor name"] = name
+        new_file.loc[:, "Building"] = name.split('-')[0]
+        new_file.loc[:, "Location"]  = name.split('-')[-1]
 
     csv_files.append(new_file)
 
