@@ -18,5 +18,5 @@ urlpatterns = [
     path("api/v1/sensors/<int:sensor_id>/readings.csv", views.readings_csv, name="readings_csv"),
     path("api/v1/sensors/<int:sensor_id>/forecast/", views.forecast_api, name="forecast_api"),
     path("api/v1/subscriptions/", views.subscription_api, name="subscription_api"),
-    path("api/v1/measurements/<slug:building>/<slug:location>", views.measurements, name="measurements"),
+    path("api/v1/measurements/<slug:sensor>", views.measurements, name="measurements"),
 ]

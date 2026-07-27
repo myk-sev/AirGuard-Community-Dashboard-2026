@@ -5,6 +5,7 @@ from datetime import timedelta
 from statistics import median
 
 from django.core.files.storage import default_storage
+from django.core.mail import send_mail
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -69,7 +70,6 @@ def _building_summary(building, now=None):
 def _network_status():
     now = timezone.now()
     snapshots = [_sensor_snapshot(sensor, now) for sensor in Sensor.objects.select_related("building")]
-    print(snapshots)
     valid = [sensor["aqi"] for sensor in snapshots if sensor["aqi"] is not None]
     total = len(snapshots)
     current_aqi = round(median(valid)) if len(valid) >= (total + 1) // 2 and valid else None
@@ -219,7 +219,7 @@ def subscription_api(request):
 
 # NOTE: This can be esily modified to not need building and location passed through
 @require_POST
-def measurements(request, building, location):
+def measurements(request, sensor):
     form = UploadFileForm(request.POST, request.FILES)
 
     if form.is_valid():
@@ -235,12 +235,43 @@ def measurements(request, building, location):
         # TODO: pull from POST
         # TODO: pull from database
         sensor = Sensor.objects.create(
-                    building=building,
-                    name=location,
-                    placement=location,
+                    building=data.get("building"),
+                    name=data.get("location"),
+                    placement=data.("location"),
                     external_id=f"{building}-{placement}",
                 )
 
         observed_at = data.get("time")
         pm25 = data.get("PM2.5(µg/m³)")
         reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
+
+        send_email(data.get("location"), pm25)
+
+# TODO: Server admins: Set up email authentication
+def send_email(location, pm25):
+
+    emails = []
+
+    # TODO: pull from csv
+    danger_map = {
+        "example" : {
+            "johndoe@example.org" : 3
+        }
+    }
+
+    for i in danger_map.get(location).keys:
+        if (pm25 >= danger_map.get(location).get(i)):
+            # TODO: check for forecasted warning, too
+            emails.add(i)
+
+    message_list = ["", "", "", "", ""]
+
+    message = ""
+
+    send_mail(
+        "AirGuard Air Quality Alert",
+        message,
+        "no-reply@airguard.nd.edu", # example sender email
+        emails,
+        fail_silently=False,
+    )
