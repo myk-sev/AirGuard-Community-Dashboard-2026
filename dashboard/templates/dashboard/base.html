@@ -12,12 +12,13 @@
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
   <header class="site-header">
+    <!--adds colored band to the top of the website. TODO: replace with CSS-->
     <div class="community-band" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     <div class="header-inner">
       <div class="header-top">
         <a class="brand" href="{% url 'dashboard:home' %}" aria-label="AirGuard home">
           <span class="brand-mark" aria-hidden="true">AG</span>
-          <span><span class="brand-name">AirGuard</span><span class="brand-tagline" data-i18n="tagline">Community air, made clearer</span></span>
+          <span><span class="brand-name">AirGuard</span><span class="brand-tagline" data-i18n="tagline">Community Air Made Accessible</span></span>
         </a>
         <label class="language-control">
           <span data-i18n="language">Language</span>
@@ -29,9 +30,9 @@
       </div>
       <nav class="site-nav" aria-label="Primary navigation">
         <a href="{% url 'dashboard:home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %} data-i18n="home">Home</a>
-        <a href="{% url 'dashboard:readings' %}" {% if request.resolver_match.url_name == 'readings' or request.resolver_match.url_name == 'building' %}aria-current="page"{% endif %} data-i18n="readings">Current readings</a>
+        <a href="{% url 'dashboard:readings' %}" {% if request.resolver_match.url_name == 'readings' or request.resolver_match.url_name == 'building' %}aria-current="page"{% endif %} data-i18n="readings">Current Readings</a>
         <a href="{% url 'dashboard:resources' %}" {% if request.resolver_match.url_name == 'resources' %}aria-current="page"{% endif %} data-i18n="resources">Resources</a>
-        <a href="{% url 'dashboard:notifications' %}" {% if request.resolver_match.url_name == 'notifications' %}aria-current="page"{% endif %} data-i18n="signup">Sign up</a>
+        <a href="{% url 'dashboard:notifications' %}" {% if request.resolver_match.url_name == 'notifications' %}aria-current="page"{% endif %} data-i18n="signup">Sign Up</a>
       </nav>
     </div>
   </header>
@@ -40,16 +41,16 @@
     <div class="footer-inner">
       <section class="footer-about" aria-labelledby="footer-about-title">
         <h2 id="footer-about-title">AirGuard</h2>
-        <p data-i18n="footerDescription">Practical indoor air information for participating community buildings.</p>
-        <p class="footer-data-note" data-i18n="sensorFooter">Indoor low-cost sensor data for community guidance.</p>
+        <p data-i18n="footerDescription"><em>Providing accessible indoor air quality insights for participating community buildings.</em></p>
+        <p class="footer-data-note" data-i18n="sensorFooter"><em>Low-cost sensor data transformed into actionable information for healthier indoor environments.</em></p>
       </section>
       <nav aria-labelledby="footer-explore-title">
         <h2 id="footer-explore-title" data-i18n="explore">Explore</h2>
         <ul>
           <li><a href="{% url 'dashboard:home' %}" data-i18n="home">Home</a></li>
-          <li><a href="{% url 'dashboard:readings' %}" data-i18n="readings">Current readings</a></li>
+          <li><a href="{% url 'dashboard:readings' %}" data-i18n="readings">Current Readings</a></li>
           <li><a href="{% url 'dashboard:resources' %}" data-i18n="resources">Resources</a></li>
-          <li><a href="{% url 'dashboard:notifications' %}" data-i18n="signup">Sign up</a></li>
+          <li><a href="{% url 'dashboard:notifications' %}" data-i18n="signup">Sign Up</a></li>
         </ul>
       </nav>
       <nav aria-labelledby="footer-learn-title">

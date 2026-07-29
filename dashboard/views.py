@@ -91,6 +91,7 @@ def _network_status():
         "reporting": len(valid),
         "total": total,
         "updated_at": max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None),
+        "epoch_updated_at": max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None).timestamp,
         "forecast_aqi": peak_aqi,
         "forecast_category": peak_category["label"],
         "forecast_at": peak_stamp,
@@ -219,29 +220,24 @@ def subscription_api(request):
         return JsonResponse({"error": "Invalid subscription"}, status=400)
     return JsonResponse({"id": subscription.id, "saved": True})
 
-# NOTE: This can be esily modified to not need building and location passed through
 # NOTE: Currently formatted for Govee Sensor input
 @require_POST
-def measurements(request, sensor):
+def measurements(request, sensor_name):
     form = UploadFileForm(request.POST, request.FILES)
 
     if form.is_valid():
-        file = default_storage.save("temp_measurements_{}_{}.csv".format(building, location), request.FILES["file"])
-        data = csv.DictReader(file)
-
-        # Find Building ID from building name
-        new_building_id = Building.objects.get(slug = data.get("building")).id
+        data = csv.DictReader(request.FILES["file"])
 
         # TODO: Remove (no longer using CSVs)
         # FIXME: could possibly error if historical_measurements.csv does not exist
-        csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
+        # csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
 
         sensor = Sensor.objects.get_or_create(
-                    building=data.get("building"),
+                    # NOTE: Building should already be in the system
+                    building=Building.objects.get(slug = data.get("building")).id,
                     name=data.get("location").title(),
                     placement=data.get("location"),
-                    external_id=f"{building}-{placement}", # might be unnecessary?
-                    building_id=new_building_id
+                    external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
                 )
 
         observed_at = data.get("time")
@@ -255,11 +251,10 @@ def measurements(request, sensor):
 
 # TODO: Server admins: Set up email authentication
 def send_emails():
-    message_list = ["", "", "", "", ""]
-
     for i in Subscription.objects.all():
         if (_building_summary(Building.objects.get(id = i.building_id)).get("aqi") > i.threshold):
-            message = "" # TODO: create message based on aqi
+            message = format("\n========== PM2.5 HEALTH SUMMARY ==========\nHealth Category: {}\nWhat to do: {}\n==========================================",
+                             classify_pm25(_building_summary(Building.objects.get(id = i.building_id)).get("aqi") )) # TODO: check for whether this should be aqi or pm_25
 
             send_mail(
                 "AirGuard Air Quality Alert",
@@ -270,3 +265,35 @@ def send_emails():
             )
 
         # TODO: check for forecasted warning, too
+
+def classify_aqi(pm25):
+
+    if pm25 <= 9:
+        return (
+            "Good (0-9 µg/m³)",
+            "PM2.5 levels within this range are generally considered safe for the general population. However, sensitive groups may still experience minor health effects with prolonged exposure."
+        )
+
+    elif pm25 <= 35.4:
+        return (
+            "Moderate (9-35.4 µg/m³)",
+            "At these levels, individuals with respiratory or heart conditions, children, and older adults may experience increased respiratory symptoms. It is advised for these groups to limit prolonged outdoor exertion."
+        )
+
+    elif pm25 <= 55.4:
+        return (
+            "Unhealthy (35.4-55.4 µg/m³)",
+            "When PM2.5 levels reach this range, even healthy individuals may experience adverse health effects, including aggravated respiratory conditions and reduced lung function. It is recommended to minimize outdoor activities, especially during strenuous exercise."
+        )
+
+    elif pm25 <=1000 :
+        return (
+            "Very Unhealthy",
+            "PM2.5 levels in this range pose a significant risk to everyone, leading to serious health effects. It is crucial to stay indoors and use air purifiers if available."
+        )
+
+    else:
+        return (
+            "Hazardous (>250 µg/m³)",
+            "Levels exceeding this threshold are extremely dangerous and can cause immediate and severe health effects, including respiratory distress and cardiovascular issues."
+        )
