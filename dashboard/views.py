@@ -21,6 +21,8 @@ from .csv_cat import concatenate
 STALE_AFTER = timedelta(minutes=60)
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 
+time_last_mailed = 0
+
 
 def _sensor_snapshot(sensor, now=None):
     aqi = None
@@ -218,60 +220,53 @@ def subscription_api(request):
     return JsonResponse({"id": subscription.id, "saved": True})
 
 # NOTE: This can be esily modified to not need building and location passed through
+# NOTE: Currently formatted for Govee Sensor input
 @require_POST
 def measurements(request, sensor):
     form = UploadFileForm(request.POST, request.FILES)
 
     if form.is_valid():
-        # TODO:read file **in chunks** to long-term csv
-        # (maybe) read long-term csv to database
-
         file = default_storage.save("temp_measurements_{}_{}.csv".format(building, location), request.FILES["file"])
         data = csv.DictReader(file)
 
+        # Find Building ID from building name
+        new_building_id = Building.objects.get(slug = data.get("building")).id
+
+        # TODO: Remove (no longer using CSVs)
         # FIXME: could possibly error if historical_measurements.csv does not exist
         csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
 
-        # TODO: pull from POST
-        # TODO: pull from database
-        sensor = Sensor.objects.create(
+        sensor = Sensor.objects.get_or_create(
                     building=data.get("building"),
-                    name=data.get("location"),
-                    placement=data.("location"),
-                    external_id=f"{building}-{placement}",
+                    name=data.get("location").title(),
+                    placement=data.get("location"),
+                    external_id=f"{building}-{placement}", # might be unnecessary?
+                    building_id=new_building_id
                 )
 
         observed_at = data.get("time")
         pm25 = data.get("PM2.5(µg/m³)")
         reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
 
-        send_email(data.get("location"), pm25)
+        # TODO: move to prediciton function when that exists
+        if (timezone.now() - time_last_mailed > STALE_AFTER):
+            send_emails()
+            time_last_mailed = timezone.now()
 
 # TODO: Server admins: Set up email authentication
-def send_email(location, pm25):
-
-    emails = []
-
-    # TODO: pull from csv
-    danger_map = {
-        "example" : {
-            "johndoe@example.org" : 3
-        }
-    }
-
-    for i in danger_map.get(location).keys:
-        if (pm25 >= danger_map.get(location).get(i)):
-            # TODO: check for forecasted warning, too
-            emails.add(i)
-
+def send_emails():
     message_list = ["", "", "", "", ""]
 
-    message = ""
+    for i in Subscription.objects.all():
+        if (_building_summary(Building.objects.get(id = i.building_id)).get("aqi") > i.threshold):
+            message = "" # TODO: create message based on aqi
 
-    send_mail(
-        "AirGuard Air Quality Alert",
-        message,
-        "no-reply@airguard.nd.edu", # example sender email
-        emails,
-        fail_silently=False,
-    )
+            send_mail(
+                "AirGuard Air Quality Alert",
+                message,
+                "no-reply@airguard.nd.edu", # example sender email
+                i.email,
+                fail_silently=False,
+            )
+
+        # TODO: check for forecasted warning, too

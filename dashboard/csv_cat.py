@@ -17,6 +17,7 @@ def concatenate(input: String, output: String) -> void:
 
     if 'Sensor name' not in new_file.columns:
         # NOTE: Does not work with Aranet naming scheme
+        # NOTE: Govee naming scheme should be: BuildingName-Placement
         name = Path(i).name.split('_')[0]
         new_file.loc[:, "Sensor name"] = name
         new_file.loc[:, "Building"] = name.split('-')[0]
