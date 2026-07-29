@@ -95,7 +95,7 @@ def _network_status():
         "forecast_aqi": peak_aqi,
         "forecast_category": peak_category["label"],
         "forecast_at": peak_stamp,
-        "message": get_home_message(aqi),
+        "message": get_home_message(current_aqi),
     }
 
 
@@ -268,6 +268,9 @@ def send_emails():
         # TODO: check for forecasted warning, too
 
 def get_home_message(aqi):
+    if aqi is None:
+        return "Data Unavailable"
+
     match (int((aqi - 1)/50)):
         case 0:
             return "Air quality conditions are generally suitable for most individuals. Sensitive groups may benefit from limiting prolonged exposure to outdoor air."
