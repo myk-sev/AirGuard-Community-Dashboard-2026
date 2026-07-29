@@ -84,6 +84,8 @@ def _network_status():
     forecast_points = [(stamp, round(median(values))) for stamp, values in grouped.items() if values]
     peak_stamp, peak_aqi = max(forecast_points, key=lambda point: point[1]) if forecast_points else (None, None)
     peak_category = aqi_category(peak_aqi) if peak_aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
+    # HACK: too long
+    epoch_updated_at = max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None).timestamp if max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None) is not None else 0
     return {
         "aqi": current_aqi,
         "category": current_category["label"],
@@ -91,7 +93,7 @@ def _network_status():
         "reporting": len(valid),
         "total": total,
         "updated_at": max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None),
-        "epoch_updated_at": max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None).timestamp,
+        "epoch_updated_at": epoch_updated_at,
         "forecast_aqi": peak_aqi,
         "forecast_category": peak_category["label"],
         "forecast_at": peak_stamp,
