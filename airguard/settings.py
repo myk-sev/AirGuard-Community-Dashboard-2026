@@ -36,7 +36,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 ALLOWED_HOSTS = []
 
 # Allowed hosts for deployment
-ALLOWED_HOSTS = ["airguard-dashboard.onrender.com"]
+ALLOWED_HOSTS = ["airguard-community-dashboard-2026.onrender.com"]
 # SECURITY WARNING: don't run with debug turned on in production!
 
 if not DEBUG: # Productions settings for cookies and redirects
