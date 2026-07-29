@@ -35,6 +35,31 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
 ALLOWED_HOSTS = []
 
+# Allowed hosts for deployment
+ALLOWED_HOSTS = ["airguard-dashboard.onrender.com"]
+# SECURITY WARNING: don't run with debug turned on in production!
+
+if not DEBUG: # Productions settings for cookies and redirects
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
+
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    X_FRAME_OPTIONS = "DENY"
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    REFERRER_POLICY = "same-origin"
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Allowed hosts for deployment (empty in development)
+ALLOWED_HOSTS = []
+if PRODUCTION:
+    ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS")]
 
 # Application definition
 
