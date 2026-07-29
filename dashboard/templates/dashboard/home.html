@@ -12,7 +12,7 @@
         <p class="category-line"><span class="status-dot {{ status.category_class }}" aria-hidden="true"></span><span data-i18n="{{ status.category_class }}">{{ status.category }}</span></p>
       </div>
       <div>
-        <p class="status-message" data-i18n="statusMessage">Most people can continue normal activities. People sensitive to particle pollution may want to take it easier.</p>
+        <p class="status-message" data-i18n="statusMessage">{{ status.message }}</p>
         <div class="status-meta">
           <span><strong data-i18n="current">Current:</strong> {{ status.reporting }} <span data-i18n="of">of</span> {{ status.total }} <span data-i18n="reporting">Sensors Reporting</span></span>
           <span><strong data-i18n="forecast">Forecast:</strong> <span data-i18n="{% if status.forecast_aqi <= 50 %}good{% elif status.forecast_aqi <= 100 %}moderate{% else %}sensitive{% endif %}">{{ status.forecast_category }}</span>{% if status.forecast_at %} {{ status.forecast_at|date:'g A' }}{% endif %}</span>
@@ -29,9 +29,9 @@
     <div class="dialog-body">
       <p data-i18n="aqiExplanation">AQI turns a PM2.5 measurement into a health category. A higher number means more particle pollution and a greater chance of health effects.</p>
       <div class="aqi-scale" aria-label="AQI category examples">
-        <div class="aqi-row good"><strong>0–50</strong><span><b data-i18n="good">Good</b><br><span data-i18n="goodGuidance">Air quality conditions may pose health concerns for the general population. Consider reducing prolonged outdoor activities and taking precautions when spending time outside. </span></span></div>
-        <div class="aqi-row moderate"><strong>51–100</strong><span><b data-i18n="moderate">Moderate</b><br><span data-i18n="moderateGuidance">Air quality conditions are favorable for most individuals. People can safely continue normal activities with minimal concern.</span></span></div>
-        <div class="aqi-row sensitive"><strong>101–150</strong><span><b data-i18n="sensitive">Air quality conditions are generally suitable for most individuals. Sensitive groups may benefit from limiting prolonged exposure to outdoor air.s</b><br><span data-i18n="sensitiveGuidance">Children and people with heart or lung conditions should reduce prolonged exertion.</span></span></div>
+        <div class="aqi-row good"><strong>0–50</strong><span><b data-i18n="good">Good</b><br><span data-i18n="goodGuidance">Air quality is satisfactory for most people.</span></span></div>
+        <div class="aqi-row moderate"><strong>51–100</strong><span><b data-i18n="moderate">Moderate</b><br><span data-i18n="moderateGuidance">People unusually sensitive to particle pollution may notice effects.</span></span></div>
+        <div class="aqi-row sensitive"><strong>101–150</strong><span><b data-i18n="sensitive">Unhealthy for sensitive groups</b><br><span data-i18n="sensitiveGuidance">Children and people with heart or lung conditions should reduce prolonged exertion.</span></span></div>
       </div>
       <p class="muted" data-i18n="indoorNote">AirGuard applies AQI health categories to indoor low-cost sensor readings as community guidance. It is not a regulatory outdoor AQI report.</p>
       <div class="dialog-actions"><button class="button button-primary" type="button" data-close-aqi data-i18n="close">Close</button></div>

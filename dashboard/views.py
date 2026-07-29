@@ -95,6 +95,7 @@ def _network_status():
         "forecast_aqi": peak_aqi,
         "forecast_category": peak_category["label"],
         "forecast_at": peak_stamp,
+        "message": get_home_message(aqi),
     }
 
 
@@ -265,6 +266,15 @@ def send_emails():
             )
 
         # TODO: check for forecasted warning, too
+
+def get_home_message(aqi):
+    match (int((aqi - 1)/50)):
+        case 0:
+            return "Air quality conditions are generally suitable for most individuals. Sensitive groups may benefit from limiting prolonged exposure to outdoor air."
+        case 1:
+            return "Air quality conditions are favorable for most individuals. People can safely continue normal activities with minimal concern."
+        case _:
+            return "Air quality conditions may pose health concerns for the general population. Consider reducing prolonged outdoor activities and taking precautions when spending time outside."
 
 def classify_aqi(pm25):
 
