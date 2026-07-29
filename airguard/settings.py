@@ -33,8 +33,6 @@ if not SECRET_KEY:
 # DEBUG = True
 DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
-ALLOWED_HOSTS = []
-
 # Allowed hosts for deployment
 ALLOWED_HOSTS = ["airguard-community-dashboard-2026.onrender.com"]
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -57,7 +55,6 @@ if not DEBUG: # Productions settings for cookies and redirects
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Allowed hosts for deployment (empty in development)
-ALLOWED_HOSTS = []
 if not DEBUG:
     ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS")]
 
