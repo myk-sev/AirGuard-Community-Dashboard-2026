@@ -1,7 +1,8 @@
 import pandas as pd
+import string
 from pathlib import Path
 
-def concatenate(input: String, output: String) -> void:
+def concatenate(input: string, output: string) -> None:
     csv_files = []
 
     new_file: DataFrame = pd.read_csv(input, index_col=False, header=0)
