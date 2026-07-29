@@ -58,7 +58,7 @@ if not DEBUG: # Productions settings for cookies and redirects
 
 # Allowed hosts for deployment (empty in development)
 ALLOWED_HOSTS = []
-if PRODUCTION:
+if not DEBUG:
     ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS")]
 
 # Application definition
