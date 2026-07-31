@@ -73,6 +73,12 @@ Turn it on:
 .venv\Scripts\activate.bat
 ```
 
+or (on a Unix-like system):
+
+```bash
+source .venv/bin/activate
+```
+
 When it is active, your command line will start with `(.venv)`.
 
 ## 5. Install The Python Packages
@@ -110,6 +116,14 @@ Optional: load demo data for local development:
 ```cmd
 python manage.py seed_demo
 ```
+
+In production: load real data:
+
+```cmd
+python manage.py seed_db
+```
+
+This data should be changed manually when new buildings are added to the program. New sensors are added automatically upon POST request.
 
 ## 8. Start The Development Server
 
@@ -159,7 +173,12 @@ The file `emailscript.sh` contains a bash script for sending .csv files to a ser
 
 The script should be run every hour. Add the following to your crontab:
 
-`0 * * * * /exact/path/to/emailscript.sh`
+```bash
+0 * * * * /exact/path/to/emailscript.sh
+```
 
-If the file does not run, do `chmod +x emailscript.sh`
+If the file does not execute, run
+```bash
+chmod +x emailscript.sh
+```
 
