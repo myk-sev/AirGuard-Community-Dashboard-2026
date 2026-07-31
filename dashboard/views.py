@@ -223,7 +223,6 @@ def subscription_api(request):
         return JsonResponse({"error": "Invalid subscription"}, status=400)
     return JsonResponse({"id": subscription.id, "saved": True})
 
-# NOTE: Currently formatted for Govee Sensor input
 @require_POST
 def measurements(request, sensor_name):
     if sensor_name == "govee":
@@ -304,6 +303,17 @@ def send_emails():
             )
 
         # TODO: check for forecasted warning, too
+        if Forecast.object.get_latetst_by(Building.objects.get(id = i.building)).get("pm25") > i.threshold):
+            message = format("\n========== PM2.5 FORECAST SUMMARY ==========\nHealth Category: {}\nWhat to do: {}\n==========================================",
+                             classify_pm25(_building_summary(Building.objects.get(id = i.building_id)).get("aqi") )) # TODO: check for whether this should be aqi or pm_25
+
+            send_mail(
+                "AirGuard Air Quality Alert",
+                message,
+                "no-reply@airguard.nd.edu", # example sender email
+                i.email,
+                fail_silently=False,
+            )
 
 def get_home_message(aqi):
     if aqi is None:
