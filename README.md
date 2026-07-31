@@ -152,3 +152,14 @@ Start Django:
 ```cmd
 python manage.py runserver
 ```
+
+# Email Script  
+
+The file `emailscript.sh` contains a bash script for sending .csv files to a server via POST request. It should be a sibling of a directory named `emails` to which .csv files are downloaded. This can be done with any email client.
+
+The script should be run every hour. Add the following to your crontab:
+
+`0 * * * * /exact/path/to/emailscript.sh`
+
+If the file does not run, do `chmod +x emailscript.sh`
+
