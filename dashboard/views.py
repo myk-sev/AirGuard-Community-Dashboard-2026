@@ -223,34 +223,69 @@ def subscription_api(request):
         return JsonResponse({"error": "Invalid subscription"}, status=400)
     return JsonResponse({"id": subscription.id, "saved": True})
 
-# NOTE: Currently formatted for Govee Sensor input
 @require_POST
 def measurements(request, sensor_name):
+    if sensor_name == "govee":
+        govee_upload(request)
+    elif sensor_name == "custom":
+        custom_upload(request)
+
+def govee_upload(request):
     form = UploadFileForm(request.POST, request.FILES)
 
     if form.is_valid():
         data = csv.DictReader(request.FILES["file"])
 
-        # TODO: Remove (no longer using CSVs)
-        # FIXME: could possibly error if historical_measurements.csv does not exist
-        # csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
-
         sensor = Sensor.objects.get_or_create(
-                    # NOTE: Building should already be in the system
-                    building=Building.objects.get(slug = data.get("building")).id,
-                    name=data.get("location").title(),
-                    placement=data.get("location"),
-                    external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
-                )
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
+        )
 
         observed_at = data.get("time")
         pm25 = data.get("PM2.5(µg/m³)")
         reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
 
-        # TODO: move to prediciton function when that exists
-        if (timezone.now() - time_last_mailed > STALE_AFTER):
+        if (timezone.now() - time_last_mailed > STALE_AFTER + 60):
+            # import model
+
+            model = torch.load(PATH, weight_only=False)
+            model.eval()
+
+            # export model data to dict forecast
+
+            if (forecast):
+                for i in range (timezone.now(), timezone.now() + 360000, 600):
+                    Forecast.objects.update_or_create(
+                        sensor=data.sensor,
+                        forecast_at=data.forecast_at,
+                        pm25=data.pm25,
+                        temperature=data.temperature,
+                        relative_humidity=data.relative_humidity,
+                        wind_speed=data.wind_speed,
+                        wind_direction=data.wind_direction,
+                    )
+
             send_emails()
             time_last_mailed = timezone.now()
+
+def custom_upload(request):
+    data = json.loads(request.body)
+
+    if data is not None:
+        sensor = Sensor.objects.get_or_create(
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}",
+        )
+
+        observed_at = data.get("time")
+        pm25 = data.get("PM2.5(µg/m³)")
+        reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
 
 # TODO: Server admins: Set up email authentication
 def send_emails():
@@ -268,6 +303,17 @@ def send_emails():
             )
 
         # TODO: check for forecasted warning, too
+        if Forecast.object.get_latetst_by(Building.objects.get(id = i.building)).get("pm25") > i.threshold):
+            message = format("\n========== PM2.5 FORECAST SUMMARY ==========\nHealth Category: {}\nWhat to do: {}\n==========================================",
+                             classify_pm25(_building_summary(Building.objects.get(id = i.building_id)).get("aqi") )) # TODO: check for whether this should be aqi or pm_25
+
+            send_mail(
+                "AirGuard Air Quality Alert",
+                message,
+                "no-reply@airguard.nd.edu", # example sender email
+                i.email,
+                fail_silently=False,
+            )
 
 def get_home_message(aqi):
     if aqi is None:
