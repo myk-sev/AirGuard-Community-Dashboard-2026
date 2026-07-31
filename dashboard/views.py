@@ -249,8 +249,26 @@ def govee_upload(request):
         pm25 = data.get("PM2.5(µg/m³)")
         reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
 
-        # TODO: move to prediciton function when that exists
-        if (timezone.now() - time_last_mailed > STALE_AFTER):
+        if (timezone.now() - time_last_mailed > STALE_AFTER + 60):
+            # import model
+
+            model = torch.load(PATH, weight_only=False)
+            model.eval()
+
+            # export model data to dict forecast
+
+            if (forecast):
+                for i in range (timezone.now(), timezone.now() + 360000, 600):
+                    Forecast.objects.update_or_create(
+                        sensor=data.sensor,
+                        forecast_at=data.forecast_at,
+                        pm25=data.pm25,
+                        temperature=data.temperature,
+                        relative_humidity=data.relative_humidity,
+                        wind_speed=data.wind_speed,
+                        wind_direction=data.wind_direction,
+                    )
+
             send_emails()
             time_last_mailed = timezone.now()
 
