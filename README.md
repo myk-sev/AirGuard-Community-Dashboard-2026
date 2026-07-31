@@ -44,7 +44,6 @@ Choose one option.
 Open Command Prompt, move to the folder where you keep projects, then clone the repository:
 
 ```cmd
-cd %USERPROFILE%\Documents
 git clone https://github.com/myk-sev/AirGuard-Community-Dashboard-2026.git
 cd AirGuard-Community-Dashboard-2026
 ```
@@ -117,7 +116,7 @@ Optional: load demo data for local development:
 python manage.py seed_demo
 ```
 
-In production: load real data:
+Mandatory (In production): load real data:
 
 ```cmd
 python manage.py seed_db
