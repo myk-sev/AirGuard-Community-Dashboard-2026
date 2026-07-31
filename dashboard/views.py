@@ -226,22 +226,24 @@ def subscription_api(request):
 # NOTE: Currently formatted for Govee Sensor input
 @require_POST
 def measurements(request, sensor_name):
+    if sensor_name == "govee":
+        govee_upload(request)
+    elif sensor_name == "custom":
+        custom_upload(request)
+
+def govee_upload(request):
     form = UploadFileForm(request.POST, request.FILES)
 
     if form.is_valid():
         data = csv.DictReader(request.FILES["file"])
 
-        # TODO: Remove (no longer using CSVs)
-        # FIXME: could possibly error if historical_measurements.csv does not exist
-        # csv.concatenate(default_storage.path("temp_measurements_{}_{}.csv".format(building, location)), default_storage.path("historical_measurements.csv"))
-
         sensor = Sensor.objects.get_or_create(
-                    # NOTE: Building should already be in the system
-                    building=Building.objects.get(slug = data.get("building")).id,
-                    name=data.get("location").title(),
-                    placement=data.get("location"),
-                    external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
-                )
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
+        )
 
         observed_at = data.get("time")
         pm25 = data.get("PM2.5(µg/m³)")
@@ -251,6 +253,22 @@ def measurements(request, sensor_name):
         if (timezone.now() - time_last_mailed > STALE_AFTER):
             send_emails()
             time_last_mailed = timezone.now()
+
+def custom_upload(request):
+    data = json.loads(request.body)
+
+    if data is not None:
+        sensor = Sensor.objects.get_or_create(
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}",
+        )
+
+        observed_at = data.get("time")
+        pm25 = data.get("PM2.5(µg/m³)")
+        reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
 
 # TODO: Server admins: Set up email authentication
 def send_emails():
