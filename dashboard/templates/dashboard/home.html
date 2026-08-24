@@ -2,8 +2,9 @@
 {% block title %}AirGuard | Community indoor air{% endblock %}
 {% block content %}
   <section class="page-inner" aria-labelledby="home-title">
-    <h1 id="home-title" data-i18n="communityStatus">Indoor air across participating buildings</h1>
-    <p class="lede" data-i18n="statusIntro">A simple view of conditions reported by AirGuard sensors in community spaces.</p>
+    <div id="last-updated" style="display:none">{{ status.epoch_updated_at }}</div>
+    <h1 id="home-title" data-i18n="communityStatus">Indoor Air Quality Readings</h1>
+    <p class="lede" data-i18n="statusIntro">Monitor current air quality conditions across community spaces using data collected from AirGuard sensors.</p>
     <div class="status-banner {{ status.category_class }}">
       <div>
         {% if status.updated_at %}<p class="status-updated"><span data-i18n="updated">Updated</span> {{ status.updated_at|timesince }} <span data-i18n="ago">ago</span></p>{% endif %}
@@ -11,14 +12,14 @@
         <p class="category-line"><span class="status-dot {{ status.category_class }}" aria-hidden="true"></span><span data-i18n="{{ status.category_class }}">{{ status.category }}</span></p>
       </div>
       <div>
-        <p class="status-message" data-i18n="statusMessage">Most people can continue normal activities. People sensitive to particle pollution may want to take it easier.</p>
+        <p class="status-message" data-i18n="statusMessage">{{ status.message }}</p>
         <div class="status-meta">
-          <span><strong data-i18n="current">Current:</strong> {{ status.reporting }} <span data-i18n="of">of</span> {{ status.total }} <span data-i18n="reporting">sensors reporting</span></span>
+          <span><strong data-i18n="current">Current:</strong> {{ status.reporting }} <span data-i18n="of">of</span> {{ status.total }} <span data-i18n="reporting">Sensors Reporting</span></span>
           <span><strong data-i18n="forecast">Forecast:</strong> <span data-i18n="{% if status.forecast_aqi <= 50 %}good{% elif status.forecast_aqi <= 100 %}moderate{% else %}sensitive{% endif %}">{{ status.forecast_category }}</span>{% if status.forecast_at %} {{ status.forecast_at|date:'g A' }}{% endif %}</span>
         </div>
       </div>
     </div>
-    <div class="section-heading"><div><h2 data-i18n="chooseBuilding">Building Overview</h2><p data-i18n="buildingIntro">See readings from the gym, hallway, and entrance.</p></div><a class="button all-buildings-button" href="{% url 'dashboard:readings' %}"><span data-i18n="allBuildings">All buildings</span><span aria-hidden="true">→</span></a></div>
+    <div class="section-heading"><div><h2 data-i18n="chooseBuilding">Building Overview</h2><p data-i18n="buildingIntro">Monitor air quality conditions across key locations.</p></div><a class="button all-buildings-button" href="{% url 'dashboard:readings' %}"><span data-i18n="allBuildings">All buildings</span><span aria-hidden="true">→</span></a></div>
     {% include 'dashboard/includes/building_cards.html' %}
   </section>
 {% endblock %}

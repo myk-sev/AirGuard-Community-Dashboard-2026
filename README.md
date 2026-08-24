@@ -44,7 +44,6 @@ Choose one option.
 Open Command Prompt, move to the folder where you keep projects, then clone the repository:
 
 ```cmd
-cd %USERPROFILE%\Documents
 git clone https://github.com/myk-sev/AirGuard-Community-Dashboard-2026.git
 cd AirGuard-Community-Dashboard-2026
 ```
@@ -71,6 +70,12 @@ Turn it on:
 
 ```cmd
 .venv\Scripts\activate.bat
+```
+
+or (on a Unix-like system):
+
+```bash
+source .venv/bin/activate
 ```
 
 When it is active, your command line will start with `(.venv)`.
@@ -110,6 +115,14 @@ Optional: load demo data for local development:
 ```cmd
 python manage.py seed_demo
 ```
+
+Mandatory (In production): load real data:
+
+```cmd
+python manage.py seed_db
+```
+
+This data should be changed manually when new buildings are added to the program. New sensors are added automatically upon POST request.
 
 ## 8. Start The Development Server
 
@@ -152,3 +165,19 @@ Start Django:
 ```cmd
 python manage.py runserver
 ```
+
+# Email Script  
+
+The file `emailscript.sh` contains a bash script for sending .csv files to a server via POST request. It should be a sibling of a directory named `emails` to which .csv files are downloaded. This can be done with any email client.
+
+The script should be run every hour. Add the following to your crontab:
+
+```bash
+0 * * * * /exact/path/to/emailscript.sh
+```
+
+If the file does not execute, run
+```bash
+chmod +x emailscript.sh
+```
+

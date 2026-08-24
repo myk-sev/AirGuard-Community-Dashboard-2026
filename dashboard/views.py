@@ -4,6 +4,8 @@ from collections import defaultdict
 from datetime import timedelta
 from statistics import median
 
+from django.core.files.storage import default_storage
+from django.core.mail import send_mail
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -13,9 +15,10 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from .aqi import aqi_category, nowcast, pm25_to_aqi
 from .forms import SubscriptionForm
 from .models import Building, Forecast, Sensor, Subscription
+from .csv_cat import concatenate
 
 
-STALE_AFTER = timedelta(minutes=15)
+STALE_AFTER = timedelta(minutes=60)
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 DESIGN_TEMPLATES = {
     "bands": "dashboard/home_design_bands.html",
@@ -25,14 +28,20 @@ DESIGN_TEMPLATES = {
     "placards": "dashboard/home_design_placards.html",
 }
 
+time_last_mailed = 0
+
 
 def _sensor_snapshot(sensor, now=None):
+    aqi = None
     now = now or timezone.now()
     readings = list(sensor.readings.order_by("-observed_at")[:12])
     latest = readings[0] if readings else None
     stale = not latest or now - latest.observed_at > STALE_AFTER
-    concentration = None if stale else nowcast([reading.pm25 for reading in readings])
-    aqi = None if concentration is None else pm25_to_aqi(concentration)
+
+    if not stale:
+        concentration = nowcast([reading.pm25 for reading in readings])
+        aqi = pm25_to_aqi(concentration)
+
     category = aqi_category(aqi) if aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
     return {
         "id": sensor.id,
@@ -82,6 +91,8 @@ def _network_status():
     forecast_points = [(stamp, round(median(values))) for stamp, values in grouped.items() if values]
     peak_stamp, peak_aqi = max(forecast_points, key=lambda point: point[1]) if forecast_points else (None, None)
     peak_category = aqi_category(peak_aqi) if peak_aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
+    # HACK: too long
+    epoch_updated_at = max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None).timestamp if max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None) is not None else 0
     return {
         "aqi": current_aqi,
         "category": current_category["label"],
@@ -89,9 +100,11 @@ def _network_status():
         "reporting": len(valid),
         "total": total,
         "updated_at": max((sensor["observed_at"] for sensor in snapshots if sensor["observed_at"]), default=None),
+        "epoch_updated_at": epoch_updated_at,
         "forecast_aqi": peak_aqi,
         "forecast_category": peak_category["label"],
         "forecast_at": peak_stamp,
+        "message": get_home_message(current_aqi),
     }
 
 
@@ -226,3 +239,139 @@ def subscription_api(request):
     except (Building.DoesNotExist, KeyError, TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({"error": "Invalid subscription"}, status=400)
     return JsonResponse({"id": subscription.id, "saved": True})
+
+@require_POST
+def measurements(request, sensor_name):
+    if sensor_name == "govee":
+        govee_upload(request)
+    elif sensor_name == "custom":
+        custom_upload(request)
+
+def govee_upload(request):
+    form = UploadFileForm(request.POST, request.FILES)
+
+    if form.is_valid():
+        data = csv.DictReader(request.FILES["file"])
+
+        sensor = Sensor.objects.get_or_create(
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}", # might be unnecessary?
+        )
+
+        observed_at = data.get("time")
+        pm25 = data.get("PM2.5(µg/m³)")
+        reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
+
+        if (timezone.now() - time_last_mailed > STALE_AFTER + 60):
+            # import model
+
+            model = torch.load(PATH, weight_only=False)
+            model.eval()
+
+            # export model data to dict forecast
+
+            if (forecast):
+                for i in range (timezone.now(), timezone.now() + 360000, 600):
+                    Forecast.objects.update_or_create(
+                        sensor=data.sensor,
+                        forecast_at=data.forecast_at,
+                        pm25=data.pm25,
+                        temperature=data.temperature,
+                        relative_humidity=data.relative_humidity,
+                        wind_speed=data.wind_speed,
+                        wind_direction=data.wind_direction,
+                    )
+
+            send_emails()
+            time_last_mailed = timezone.now()
+
+def custom_upload(request):
+    data = json.loads(request.body)
+
+    if data is not None:
+        sensor = Sensor.objects.get_or_create(
+            # NOTE: Building should already be in the system
+            building=Building.objects.get(slug = data.get("building")).id,
+            name=data.get("location").title(),
+            placement=data.get("location"),
+            external_id=f"{data.get("building")}-{placement}",
+        )
+
+        observed_at = data.get("time")
+        pm25 = data.get("PM2.5(µg/m³)")
+        reading = Reading.objects.create(sensor=sensor, observed_at=observed_at, pm25=pm25)
+
+# TODO: Server admins: Set up email authentication
+def send_emails():
+    for i in Subscription.objects.all():
+        if (_building_summary(Building.objects.get(id = i.building_id)).get("aqi") > i.threshold):
+            message = format("\n========== PM2.5 HEALTH SUMMARY ==========\nHealth Category: {}\nWhat to do: {}\n==========================================",
+                             classify_pm25(_building_summary(Building.objects.get(id = i.building_id)).get("aqi") )) # TODO: check for whether this should be aqi or pm_25
+
+            send_mail(
+                "AirGuard Air Quality Alert",
+                message,
+                "no-reply@airguard.nd.edu", # example sender email
+                i.email,
+                fail_silently=False,
+            )
+
+        # TODO: check for forecasted warning, too
+        if Forecast.object.get_latetst_by(Building.objects.get(id = i.building)).get("pm25") > i.threshold):
+            message = format("\n========== PM2.5 FORECAST SUMMARY ==========\nHealth Category: {}\nWhat to do: {}\n==========================================",
+                             classify_pm25(_building_summary(Building.objects.get(id = i.building_id)).get("aqi") )) # TODO: check for whether this should be aqi or pm_25
+
+            send_mail(
+                "AirGuard Air Quality Alert",
+                message,
+                "no-reply@airguard.nd.edu", # example sender email
+                i.email,
+                fail_silently=False,
+            )
+
+def get_home_message(aqi):
+    if aqi is None:
+        return "Data Unavailable"
+
+    match (int((aqi - 1)/50)):
+        case 0:
+            return "Air quality conditions are generally suitable for most individuals. Sensitive groups may benefit from limiting prolonged exposure to outdoor air."
+        case 1:
+            return "Air quality conditions are favorable for most individuals. People can safely continue normal activities with minimal concern."
+        case _:
+            return "Air quality conditions may pose health concerns for the general population. Consider reducing prolonged outdoor activities and taking precautions when spending time outside."
+
+def classify_aqi(pm25):
+
+    if pm25 <= 9:
+        return (
+            "Good (0-9 µg/m³)",
+            "PM2.5 levels within this range are generally considered safe for the general population. However, sensitive groups may still experience minor health effects with prolonged exposure."
+        )
+
+    elif pm25 <= 35.4:
+        return (
+            "Moderate (9-35.4 µg/m³)",
+            "At these levels, individuals with respiratory or heart conditions, children, and older adults may experience increased respiratory symptoms. It is advised for these groups to limit prolonged outdoor exertion."
+        )
+
+    elif pm25 <= 55.4:
+        return (
+            "Unhealthy (35.4-55.4 µg/m³)",
+            "When PM2.5 levels reach this range, even healthy individuals may experience adverse health effects, including aggravated respiratory conditions and reduced lung function. It is recommended to minimize outdoor activities, especially during strenuous exercise."
+        )
+
+    elif pm25 <=1000 :
+        return (
+            "Very Unhealthy",
+            "PM2.5 levels in this range pose a significant risk to everyone, leading to serious health effects. It is crucial to stay indoors and use air purifiers if available."
+        )
+
+    else:
+        return (
+            "Hazardous (>250 µg/m³)",
+            "Levels exceeding this threshold are extremely dangerous and can cause immediate and severe health effects, including respiratory distress and cardiovascular issues."
+        )
