@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Community indoor PM2.5 readings, forecasts, and health guidance.">
   <title>{% block title %}AirGuard{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}?v=4">
   <script defer src="{% static 'dashboard/app.js' %}?v=3"></script>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
   <header class="site-header">
     <div class="community-band" aria-hidden="true"><span></span><span></span><span></span><span></span></div>

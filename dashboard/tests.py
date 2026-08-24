@@ -38,6 +38,12 @@ class DashboardTests(TestCase):
         self.assertContains(response, "Updated")
         self.assertContains(response, "What does AQI mean?")
 
+    def test_design_options_render(self):
+        for option in ("bands", "motif", "typography", "conventional", "placards"):
+            response = self.client.get(reverse("dashboard:design_option", args=(option,)))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, f"design-{option}")
+
     def test_building_page_has_three_sensor_controls(self):
         building = Building.objects.first()
         response = self.client.get(reverse("dashboard:building", args=(building.slug,)))

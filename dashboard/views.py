@@ -17,6 +17,13 @@ from .models import Building, Forecast, Sensor, Subscription
 
 STALE_AFTER = timedelta(minutes=15)
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
+DESIGN_TEMPLATES = {
+    "bands": "dashboard/home_design_bands.html",
+    "motif": "dashboard/home_design_motif.html",
+    "typography": "dashboard/home_design_typography.html",
+    "conventional": "dashboard/home_design_conventional.html",
+    "placards": "dashboard/home_design_placards.html",
+}
 
 
 def _sensor_snapshot(sensor, now=None):
@@ -88,8 +95,18 @@ def _network_status():
     }
 
 
+def _home_context():
+    return {"status": _network_status(), "buildings": [_building_summary(item) for item in Building.objects.prefetch_related("sensors")]}
+
+
 def home(request):
-    return render(request, "dashboard/home.html", {"status": _network_status(), "buildings": [_building_summary(item) for item in Building.objects.prefetch_related("sensors")]})
+    return render(request, "dashboard/home.html", _home_context())
+
+
+def design_option(request, option):
+    if option not in DESIGN_TEMPLATES:
+        raise Http404("Unknown design option")
+    return render(request, DESIGN_TEMPLATES[option], _home_context())
 
 
 def readings(request):
