@@ -137,6 +137,8 @@ services:
         value: imap.fastmail.com
       - key: GOVEE_IMAP_PORT
         value: "993"
+      - key: GOVEE_IMAP_TIMEOUT_SECONDS
+        value: "60"
       - key: GOVEE_IMAP_FOLDER
         value: INBOX
       - key: GOVEE_MAIL_ALLOWED_SENDER
