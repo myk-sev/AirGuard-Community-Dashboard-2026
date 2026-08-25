@@ -23,6 +23,7 @@ from .emailing import queue_verification, token_hash
 from .forms import SubscriptionForm
 from .ingestion import import_govee_csv
 from .models import Building, Forecast, IngestBatch, OutboundEmail, ProviderEvent, Reading, Sensor, Subscription, Suppression
+from .weather import refresh_forecast_weather_if_stale
 
 
 STALE_AFTER = timedelta(minutes=15)
@@ -329,6 +330,10 @@ def readings_csv(request, sensor_id):
 @require_GET
 def forecast_api(request, sensor_id):
     sensor = get_object_or_404(Sensor, id=sensor_id, enabled=True)
+    try:
+        refresh_forecast_weather_if_stale()
+    except Exception:
+        pass
     now = timezone.now()
     forecasts = sensor.forecasts.filter(
         forecast_at__gte=now,

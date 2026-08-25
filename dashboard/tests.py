@@ -148,14 +148,16 @@ class DashboardTests(TestCase):
         self.assertIn(b"pm25_ug_m3", response.content)
         self.assertIn(b"data_status", response.content)
 
-    def test_forecast_api_contains_provenance_and_weather(self):
+    @patch("dashboard.views.refresh_forecast_weather_if_stale")
+    def test_forecast_api_contains_provenance_and_weather(self, refresh_weather):
         sensor = Building.objects.first().sensors.first()
         first = self.client.get(reverse("dashboard:forecast_api", args=(sensor.id,))).json()["forecasts"][0]
+        refresh_weather.assert_called_once()
         for key in ("temperature", "relative_humidity", "wind_speed", "wind_direction", "generated_at", "source", "run_id", "weather_source", "weather_generated_at"):
             self.assertIn(key, first)
 
     @override_settings(AIRGUARD_WEATHER_LATITUDE="41.6881", AIRGUARD_WEATHER_LONGITUDE="-86.2355")
-    @patch("dashboard.management.commands.update_forecast_weather.fetch_weather")
+    @patch("dashboard.weather.fetch_weather")
     def test_weather_update_preserves_pm25_provenance(self, fetch_weather):
         forecast = Forecast.objects.filter(forecast_at__gte=timezone.now()).first()
         hour = forecast.forecast_at.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
