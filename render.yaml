@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: air-guard-aqi
+    runtime: python
+    plan: free
+    branch: codex/render-address-probe
+    buildCommand: python -m py_compile server.py
+    startCommand: python server.py
+    healthCheckPath: /health/
+    autoDeployTrigger: commit
