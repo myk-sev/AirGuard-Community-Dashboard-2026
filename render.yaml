@@ -25,7 +25,7 @@ services:
       - key: AIRGUARD_DATA_DIR
         value: /var/data
       - key: AIRGUARD_SITE_URL
-        value: https://airguard-community-dashboard-2026-1uur.onrender.com
+        value: https://air-guard-aqi.onrender.com
       - key: AIRGUARD_INGEST_TOKEN
         generateValue: true
       - key: AIRGUARD_POSTMARK_WEBHOOK_TOKEN
