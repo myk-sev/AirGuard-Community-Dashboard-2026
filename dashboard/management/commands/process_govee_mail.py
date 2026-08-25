@@ -32,6 +32,8 @@ class Command(BaseCommand):
             if status != "OK":
                 raise CommandError("The mailbox search failed.")
             for message_uid in data[0].split()[-options["limit"]:]:
+                uid = message_uid.decode(errors="replace")
+                self.stdout.write(f"Processing Govee message {uid}")
                 status, payload = mailbox.uid("fetch", message_uid, "(RFC822)")
                 raw_message = next((item[1] for item in payload or [] if isinstance(item, tuple)), None)
                 if status != "OK" or not raw_message:
@@ -42,12 +44,13 @@ class Command(BaseCommand):
                     processed += bool(results)
                     ignored += not results
                     mailbox.uid("store", message_uid, "+FLAGS", "\\Seen")
+                    self.stdout.write(f"Finished Govee message {uid}")
                 except NoMeasurementAttachments:
                     ignored += 1
                     mailbox.uid("store", message_uid, "+FLAGS", "\\Seen")
                 except ValueError as error:
                     failed += 1
-                    self.stderr.write(f"Govee message {message_uid.decode(errors='replace')} failed: {error}")
+                    self.stderr.write(f"Govee message {uid} failed: {error}")
         summary = f"Processed {processed}; ignored {ignored}; failed {failed} Govee messages"
         if failed:
             raise CommandError(summary)

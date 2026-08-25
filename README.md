@@ -98,13 +98,13 @@ Run this command on the dashboard server. It reads unread mail from the allowed 
 
 VMOS Cloud schedules the `v36 - ag email` workflow once per hour. `run_vmos_exports.cmd` remains available as a manual local fallback for the sibling `vmos_govee` workflow.
 
-The preferred deployment runs mailbox ingestion on the dashboard host, where it writes directly to the production database and media storage. Schedule this command at 30 minutes past each hour using the host's cron or scheduled-job service:
+On a host that shares the dashboard's media disk, mailbox ingestion can write directly to the database and media storage:
 
 ```bash
 30 * * * * cd /path/to/AirGuard-Community-Dashboard-2026 && .venv/bin/python manage.py process_govee_mail
 ```
 
-The Render Blueprint's existing alert cron now runs this mailbox command before alert evaluation. Add `GOVEE_IMAP_USER` and `GOVEE_IMAP_PASSWORD` to that cron service; the other Govee IMAP settings are supplied by `render.yaml`.
+Render cron services do not share the web service's persistent disk. The Blueprint therefore runs `forward_govee_mail`, which reads each sensor's separate unread email and uploads its CSV through the authenticated dashboard endpoint. The web service then validates, archives, deduplicates, and bulk-imports the file on its own disk and database. A message is marked read only after its upload succeeds; one rejected sensor export does not prevent later messages from being attempted.
 
 On a Windows dashboard host, `run_govee_mail_ingestion.cmd` performs the same operation. `run_airguard_jobs.cmd` independently attempts these alert steps every run:
 

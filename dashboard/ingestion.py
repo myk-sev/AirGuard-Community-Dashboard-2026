@@ -71,23 +71,32 @@ def import_govee_csv(content, filename, *, inbound_message=None, sensor_id=None)
         if not rows:
             raise ValueError("The uploaded CSV has no measurements.")
 
-        created = 0
+        readings = {}
+        for row in rows:
+            value = _value(row, PM25_NAMES)
+            try:
+                pm25 = float(value) + sensor.calibration_offset
+            except (TypeError, ValueError):
+                raise ValueError("Each measurement needs a numeric PM2.5 value.") from None
+            if not 0 <= pm25 <= settings.AIRGUARD_MAX_PM25:
+                raise ValueError("PM2.5 is outside the accepted measurement range.")
+            readings[_observed_at(_value(row, TIMESTAMP_NAMES), sensor)] = pm25
+
+        existing = set(
+            Reading.objects.filter(
+                sensor=sensor,
+                observed_at__range=(min(readings), max(readings)),
+            ).values_list("observed_at", flat=True)
+        ) & readings.keys()
+        created = len(readings) - len(existing)
         with transaction.atomic():
-            for row in rows:
-                value = _value(row, PM25_NAMES)
-                try:
-                    pm25 = float(value) + sensor.calibration_offset
-                except (TypeError, ValueError):
-                    raise ValueError("Each measurement needs a numeric PM2.5 value.") from None
-                if not 0 <= pm25 <= settings.AIRGUARD_MAX_PM25:
-                    raise ValueError("PM2.5 is outside the accepted measurement range.")
-                observed_at = _observed_at(_value(row, TIMESTAMP_NAMES), sensor)
-                _, was_created = Reading.objects.update_or_create(
-                    sensor=sensor,
-                    observed_at=observed_at,
-                    defaults={"pm25": pm25, "ingest_batch": batch},
-                )
-                created += was_created
+            Reading.objects.bulk_create(
+                [Reading(sensor=sensor, observed_at=observed_at, pm25=pm25, ingest_batch=batch) for observed_at, pm25 in readings.items()],
+                update_conflicts=True,
+                update_fields=("pm25", "ingest_batch"),
+                unique_fields=("sensor", "observed_at"),
+                batch_size=1000,
+            )
         batch.status = "processed"
         batch.rows = len(rows)
         batch.created_rows = created

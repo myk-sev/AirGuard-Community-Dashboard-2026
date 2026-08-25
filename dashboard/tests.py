@@ -293,6 +293,35 @@ class DashboardTests(TestCase):
         self.assertTrue(response.json()["duplicate"])
         self.assertEqual(IngestBatch.objects.count(), 1)
 
+    def test_govee_attachment_bulk_updates_existing_readings(self):
+        call_command("seed_db", verbosity=0)
+        observed_at = timezone.localtime().replace(second=0, microsecond=0)
+        url = reverse("dashboard:measurements", args=("govee",))
+        headers = {"HTTP_AUTHORIZATION": "Bearer test-ingest-token"}
+        for pm25 in (10, 12):
+            content = ("Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)\n" f"{observed_at.strftime('%d/%m/%Y %I:%M:%S %p')},{pm25}\n").encode()
+            upload = SimpleUploadedFile(f"BGC-B6_export_{pm25}.csv", content, content_type="text/csv")
+            response = self.client.post(url, {"file": upload}, **headers)
+
+        self.assertEqual(response.json()["updated"], 1)
+        self.assertEqual(Reading.objects.get(sensor__external_id="BGC-B6", observed_at=observed_at).pm25, 12)
+
+    def test_govee_attachment_bulk_imports_large_export(self):
+        call_command("seed_db", verbosity=0)
+        start = timezone.localtime().replace(second=0, microsecond=0) - timedelta(minutes=2000)
+        lines = ["Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)"]
+        lines.extend(f"{(start + timedelta(minutes=minute)).strftime('%d/%m/%Y %I:%M:%S %p')},10" for minute in range(2001))
+        upload = SimpleUploadedFile("BGC-B8_export_large.csv", "\n".join(lines).encode(), content_type="text/csv")
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.client.post(
+                reverse("dashboard:measurements", args=("govee",)),
+                {"file": upload},
+                HTTP_AUTHORIZATION="Bearer test-ingest-token",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["created"], 2001)
+
     @override_settings(GOVEE_MAIL_ALLOWED_SENDER="noreply@govee.example")
     def test_mailbox_processes_zip_and_archives_message(self):
         call_command("seed_db", verbosity=0)
@@ -393,16 +422,19 @@ class DashboardTests(TestCase):
         AIRGUARD_INGEST_TOKEN="ingest-token",
     )
     def test_forward_mailbox_command_uploads_to_remote_dashboard(self):
-        export = EmailMessage()
-        export["From"] = "no-reply@govee.com"
-        export.set_content("Attached")
-        export.add_attachment(
-            b"Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)\n24/08/2026 02:00:00 PM,10\n",
-            maintype="text",
-            subtype="csv",
-            filename="BGC-B6_export_202608241400.csv",
-        )
-        mailbox = FakeImap({b"1": export.as_bytes()})
+        def export(sensor):
+            message = EmailMessage()
+            message["From"] = "no-reply@govee.com"
+            message.set_content("Attached")
+            message.add_attachment(
+                b"Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)\n24/08/2026 02:00:00 PM,10\n",
+                maintype="text",
+                subtype="csv",
+                filename=f"{sensor}_export_202608241400.csv",
+            )
+            return message.as_bytes()
+
+        mailbox = FakeImap({b"1": export("BGC-B6"), b"2": export("BGC-B7")})
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'{"created": 1}'
         output = io.StringIO()
@@ -413,12 +445,13 @@ class DashboardTests(TestCase):
         ):
             call_command("forward_govee_mail", stdout=output)
 
-        request = upload.call_args.args[0]
+        request = upload.call_args_list[0].args[0]
         self.assertEqual(request.full_url, "https://dashboard.example.org/api/v1/measurements/govee/")
         self.assertEqual(request.get_header("Authorization"), "Bearer ingest-token")
         self.assertIn(b'filename="BGC-B6_export_202608241400.csv"', request.data)
-        self.assertEqual(mailbox.seen, [b"1"])
-        self.assertIn("Processed 1; ignored 0; failed 0", output.getvalue())
+        self.assertEqual(upload.call_count, 2)
+        self.assertEqual(mailbox.seen, [b"1", b"2"])
+        self.assertIn("Processed 2; ignored 0; failed 0", output.getvalue())
 
     def test_postmark_complaint_suppresses_future_email(self):
         building = Building.objects.first()
