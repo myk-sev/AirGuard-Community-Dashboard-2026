@@ -1,0 +1,18 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Alert preferences | AirGuard{% endblock %}
+{% block content %}
+  <section class="page-inner form-page" aria-labelledby="subscription-title">
+    {% if status == 'verified' %}
+      <h1 id="subscription-title" data-i18n="verifiedTitle">Email confirmed</h1>
+      <p class="lede" data-i18n="verifiedText">Your AirGuard forecast alert is active.</p>
+    {% elif status == 'unsubscribed' %}
+      <h1 id="subscription-title" data-i18n="unsubscribedTitle">Alerts stopped</h1>
+      <p class="lede" data-i18n="unsubscribedText">This address will no longer receive AirGuard alerts.</p>
+    {% else %}
+      <h1 id="subscription-title" data-i18n="unsubscribeTitle">Stop AirGuard alerts?</h1>
+      <p class="lede" data-i18n="unsubscribeText">Confirm that you want to stop all alerts for this subscription.</p>
+      <form method="post">{% csrf_token %}<button class="button button-primary" type="submit" data-i18n="confirmUnsubscribe">Stop alerts</button></form>
+    {% endif %}
+    <p><a href="{% url 'dashboard:home' %}" data-i18n="returnHome">Return to AirGuard</a></p>
+  </section>
+{% endblock %}

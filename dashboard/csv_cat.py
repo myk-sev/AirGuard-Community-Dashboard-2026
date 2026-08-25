@@ -1,34 +1,45 @@
-import pandas as pd
-import string
+import csv
+from datetime import datetime
 from pathlib import Path
 
-def concatenate(input: string, output: string) -> None:
-    csv_files = []
 
-    new_file: DataFrame = pd.read_csv(input, index_col=False, header=0)
-    old_file: DataFrame = pd.read_csv(output, index_col=False, header=0)
+TIMESTAMP_COLUMNS = (
+    ("Timestamp\xa0for\xa0sample\xa0frequency\xa0every\xa01 min\xa0min", None),
+    ("Time(DD/MM/YYYY h:mm:ss A)", "%d/%m/%Y %I:%M:%S %p"),
+)
 
-    if 'Timestamp for sample frequency every 1 min min' in new_file.columns:
-        new_file["Time"] = pd.to_datetime(new_file['Timestamp for sample frequency every 1 min min'])
-        new_file.drop(columns=['Timestamp for sample frequency every 1 min min'], inplace=True)
 
-    if 'Time(DD/MM/YYYY h:mm:ss A)' in new_file.columns:
-        new_file["Time"] = pd.to_datetime(new_file['Time(DD/MM/YYYY h:mm:ss A)'], format = "%d/%m/%Y %I:%M:%S %p")
-        new_file.drop(columns=['Time(DD/MM/YYYY h:mm:ss A)'], inplace=True)
+def _rows(path):
+    with Path(path).open(encoding="utf-8-sig", newline="") as file:
+        return list(csv.DictReader(file))
 
-    if 'Sensor name' not in new_file.columns:
-        # NOTE: Does not work with Aranet naming scheme
-        # NOTE: Govee naming scheme should be: BuildingName-Placement
-        name = Path(i).name.split('_')[0]
-        new_file.loc[:, "Sensor name"] = name
-        new_file.loc[:, "Building"] = name.split('-')[0]
-        new_file.loc[:, "Location"]  = name.split('-')[-1]
 
-    csv_files.append(new_file)
+def _normalize(row, input_path):
+    row = dict(row)
+    for column, date_format in TIMESTAMP_COLUMNS:
+        if row.get(column):
+            value = row.pop(column)
+            row["Time"] = datetime.strptime(value, date_format).isoformat(" ") if date_format else value
+            break
 
-    frame = pd.concat(csv_files, axis=0, ignore_index=True)
+    if not row.get("Sensor name"):
+        name = Path(input_path).stem.split("_", 1)[0]
+        building, separator, location = name.rpartition("-")
+        if not separator:
+            raise ValueError("CSV filename must start with <building>-<location>.")
+        row.update({"Sensor name": name, "Building": building, "Location": location})
+    return row
 
-    frame.drop_duplicates(subset=["Time", "Sensor name"], inplace=True)
 
-    frame.to_csv(output, index=False)
-
+def concatenate(input_path: str, output_path: str) -> None:
+    output = Path(output_path)
+    rows = _rows(output) if output.exists() and output.stat().st_size else []
+    rows.extend(_normalize(row, input_path) for row in _rows(input_path))
+    if not rows:
+        raise ValueError("No CSV measurements were found.")
+    rows = list({(row.get("Time"), row.get("Sensor name")): row for row in rows}.values())
+    fields = list(dict.fromkeys(key for row in rows for key in row))
+    with output.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
