@@ -4,6 +4,8 @@ AirGuard is a Django dashboard for current indoor PM2.5 readings in participatin
 
 Forecast generation is intentionally still in development. The dashboard stores and displays forecast rows and the alert evaluator consumes fresh rows, but this repository does not create them.
 
+Outdoor weather on those rows is refreshed from Open-Meteo by `python manage.py update_forecast_weather`. Set `AIRGUARD_WEATHER_LATITUDE` and `AIRGUARD_WEATHER_LONGITUDE` for the monitored site. The command updates temperature, humidity, wind, and their provenance only; it does not change PM2.5 predictions.
+
 ## Implemented system
 
 - Current building and sensor views, bounded hourly history, CSV download, stale-data handling, and 60-second change polling.

@@ -349,6 +349,8 @@ def forecast_api(request, sensor_id):
                 "generated_at": item.generated_at.isoformat(),
                 "source": item.source,
                 "run_id": item.run_id,
+                "weather_source": item.weather_source,
+                "weather_generated_at": item.weather_generated_at.isoformat() if item.weather_generated_at else None,
             }
             for item in forecasts
         ],

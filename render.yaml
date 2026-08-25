@@ -44,6 +44,10 @@ services:
         value: "True"
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      - key: AIRGUARD_WEATHER_LATITUDE
+        value: "41.6881"
+      - key: AIRGUARD_WEATHER_LONGITUDE
+        value: "-86.2355"
 
   - type: cron
     name: airguard-alert-delivery
@@ -52,7 +56,7 @@ services:
     branch: production
     schedule: "*/15 * * * *"
     buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py process_govee_mail && python manage.py evaluate_alerts && python manage.py send_outbox
+    startCommand: python manage.py process_govee_mail && python manage.py update_forecast_weather --ignore-errors && python manage.py evaluate_alerts && python manage.py send_outbox
     autoDeployTrigger: checksPass
     envVars:
       - key: DATABASE_URL
@@ -106,6 +110,16 @@ services:
           type: web
           name: airguard-community-dashboard-2026
           envVarKey: DEFAULT_FROM_EMAIL
+      - key: AIRGUARD_WEATHER_LATITUDE
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: AIRGUARD_WEATHER_LATITUDE
+      - key: AIRGUARD_WEATHER_LONGITUDE
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: AIRGUARD_WEATHER_LONGITUDE
       - key: GOVEE_IMAP_HOST
         value: imap.fastmail.com
       - key: GOVEE_IMAP_PORT

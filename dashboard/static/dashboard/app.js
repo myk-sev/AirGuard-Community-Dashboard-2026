@@ -135,6 +135,7 @@
         ["Temperature", first && `${Math.round(first.temperature)} °F`], ["Relative humidity", first && `${first.relative_humidity}%`], ["Wind speed", first && `${first.wind_speed.toFixed(1)} mph`], ["Wind direction", first && first.wind_direction]
       ];
       document.querySelector("#weather-grid").innerHTML = first ? weather.map(([label, value]) => `<div class="weather-item"><small>${label}</small><strong>${value}</strong></div>`).join("") : "";
+      document.querySelector("#weather-attribution").innerHTML = first && first.weather_source === "open-meteo" ? `${spanish ? "Datos meteorológicos" : "Weather data"}: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>` : "";
       drawChart(document.querySelector("#forecast-chart"), forecasts.map((item) => item.pm25), forecasts.map((item) => new Date(item.timestamp).toLocaleTimeString([], { hour: "numeric" })));
       document.querySelector("#forecast-chart-desc").textContent = peakElement.textContent;
       document.querySelector("#forecast-table").innerHTML = forecasts.map((item) => `<tr><td>${new Date(item.timestamp).toLocaleString()}</td><td>${item.pm25.toFixed(1)} µg/m³</td><td>${item.aqi}</td><td>${localizedCategory(item.category)}</td></tr>`).join("");

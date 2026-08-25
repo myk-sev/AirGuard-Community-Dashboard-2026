@@ -3,7 +3,7 @@ import json
 import re
 import tempfile
 import zipfile
-from datetime import timedelta
+from datetime import UTC, timedelta
 from email.message import EmailMessage
 from unittest.mock import MagicMock, patch
 
@@ -34,6 +34,7 @@ from .models import (
     Subscription,
     Suppression,
 )
+from .weather import cardinal_direction
 
 
 class FakeImap:
@@ -150,8 +151,34 @@ class DashboardTests(TestCase):
     def test_forecast_api_contains_provenance_and_weather(self):
         sensor = Building.objects.first().sensors.first()
         first = self.client.get(reverse("dashboard:forecast_api", args=(sensor.id,))).json()["forecasts"][0]
-        for key in ("temperature", "relative_humidity", "wind_speed", "wind_direction", "generated_at", "source", "run_id"):
+        for key in ("temperature", "relative_humidity", "wind_speed", "wind_direction", "generated_at", "source", "run_id", "weather_source", "weather_generated_at"):
             self.assertIn(key, first)
+
+    @override_settings(AIRGUARD_WEATHER_LATITUDE="41.6881", AIRGUARD_WEATHER_LONGITUDE="-86.2355")
+    @patch("dashboard.management.commands.update_forecast_weather.fetch_weather")
+    def test_weather_update_preserves_pm25_provenance(self, fetch_weather):
+        forecast = Forecast.objects.filter(forecast_at__gte=timezone.now()).first()
+        hour = forecast.forecast_at.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
+        fetch_weather.return_value = {hour: {
+            "temperature": 72.5,
+            "relative_humidity": 54.0,
+            "wind_speed": 8.2,
+            "wind_direction": "WNW",
+        }}
+        original = (forecast.pm25, forecast.source, forecast.run_id)
+
+        call_command("update_forecast_weather", verbosity=0)
+
+        forecast.refresh_from_db()
+        self.assertEqual((forecast.pm25, forecast.source, forecast.run_id), original)
+        self.assertEqual((forecast.temperature, forecast.relative_humidity, forecast.wind_speed, forecast.wind_direction), (72.5, 54.0, 8.2, "WNW"))
+        self.assertEqual(forecast.weather_source, "open-meteo")
+        self.assertIsNotNone(forecast.weather_generated_at)
+
+    def test_wind_degrees_are_converted_to_cardinal_direction(self):
+        self.assertEqual(cardinal_direction(0), "N")
+        self.assertEqual(cardinal_direction(270), "W")
+        self.assertEqual(cardinal_direction(348.75), "N")
 
     def test_subscription_requires_consent_and_queues_verification(self):
         building = Building.objects.first()

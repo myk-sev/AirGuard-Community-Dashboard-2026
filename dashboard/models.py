@@ -88,6 +88,8 @@ class Forecast(models.Model):
     generated_at = models.DateTimeField(default=timezone.now)
     source = models.CharField(max_length=80, default="pending")
     run_id = models.CharField(max_length=120, blank=True)
+    weather_source = models.CharField(max_length=80, blank=True)
+    weather_generated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ("forecast_at",)
