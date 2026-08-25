@@ -6,6 +6,7 @@ import zipfile
 from datetime import UTC, timedelta
 from email.message import EmailMessage
 from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 
 from django.core import mail
 from django.core.cache import cache
@@ -452,6 +453,33 @@ class DashboardTests(TestCase):
         self.assertEqual(upload.call_count, 2)
         self.assertEqual(mailbox.seen, [b"1", b"2"])
         self.assertIn("Processed 2; ignored 0; failed 0", output.getvalue())
+
+    @override_settings(
+        GOVEE_IMAP_HOST="imap.example.org",
+        GOVEE_IMAP_USER="airguard@example.org",
+        GOVEE_IMAP_PASSWORD="app-password",
+        GOVEE_MAIL_ALLOWED_SENDER="no-reply@govee.com",
+        AIRGUARD_UPLOAD_URL="https://dashboard.example.org/api/v1/measurements/govee/",
+        AIRGUARD_INGEST_TOKEN="ingest-token",
+    )
+    def test_forward_mailbox_reports_dashboard_rejection(self):
+        export = EmailMessage()
+        export["From"] = "no-reply@govee.com"
+        export.set_content("Attached")
+        export.add_attachment(b"bad", maintype="text", subtype="csv", filename="unknown.csv")
+        mailbox = FakeImap({b"1": export.as_bytes()})
+        rejection = HTTPError("https://dashboard.example.org", 400, "Bad Request", {}, io.BytesIO(b'{"error":"Unknown sensor"}'))
+        error_output = io.StringIO()
+
+        with (
+            patch("dashboard.management.commands.process_govee_mail.imaplib.IMAP4_SSL", return_value=mailbox),
+            patch("dashboard.management.commands.forward_govee_mail.urlopen", side_effect=rejection),
+            self.assertRaises(CommandError),
+        ):
+            call_command("forward_govee_mail", stderr=error_output)
+
+        self.assertIn("Unknown sensor", error_output.getvalue())
+        self.assertEqual(mailbox.seen, [])
 
     def test_postmark_complaint_suppresses_future_email(self):
         building = Building.objects.first()

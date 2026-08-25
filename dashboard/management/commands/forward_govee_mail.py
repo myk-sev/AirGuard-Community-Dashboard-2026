@@ -27,6 +27,7 @@ class Command(MailCommand):
     def upload(self, name, content):
         boundary = uuid.uuid4().hex
         filename = PurePath(name.replace("\\", "/")).name.replace('"', "")
+        self.stdout.write(f"Uploading Govee attachment {filename}")
         body = (
             f"--{boundary}\r\n"
             f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
@@ -44,7 +45,13 @@ class Command(MailCommand):
         try:
             with urlopen(request, timeout=settings.GOVEE_IMAP_TIMEOUT_SECONDS) as response:
                 result = json.loads(response.read())
-        except (HTTPError, URLError, OSError, json.JSONDecodeError) as error:
+        except HTTPError as error:
+            try:
+                detail = json.loads(error.read()).get("error")
+            except (OSError, json.JSONDecodeError):
+                detail = None
+            raise ValueError(f"Dashboard upload failed: {detail or error}") from None
+        except (URLError, OSError, json.JSONDecodeError) as error:
             raise ValueError(f"Dashboard upload failed: {error}") from None
         if result.get("error"):
             raise ValueError(f"Dashboard upload failed: {result['error']}")
