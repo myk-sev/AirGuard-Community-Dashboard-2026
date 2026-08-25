@@ -52,7 +52,7 @@ services:
     branch: production
     schedule: "*/15 * * * *"
     buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py evaluate_alerts && python manage.py send_outbox
+    startCommand: python manage.py process_govee_mail && python manage.py evaluate_alerts && python manage.py send_outbox
     autoDeployTrigger: checksPass
     envVars:
       - key: DATABASE_URL
@@ -106,6 +106,18 @@ services:
           type: web
           name: airguard-community-dashboard-2026
           envVarKey: DEFAULT_FROM_EMAIL
+      - key: GOVEE_IMAP_HOST
+        value: imap.fastmail.com
+      - key: GOVEE_IMAP_PORT
+        value: "993"
+      - key: GOVEE_IMAP_FOLDER
+        value: INBOX
+      - key: GOVEE_MAIL_ALLOWED_SENDER
+        value: no-reply@govee.com
+      - key: GOVEE_IMAP_USER
+        sync: false
+      - key: GOVEE_IMAP_PASSWORD
+        sync: false
 
 databases:
   - name: airguard-postgres

@@ -101,6 +101,8 @@ The preferred deployment runs mailbox ingestion on the dashboard host, where it 
 30 * * * * cd /path/to/AirGuard-Community-Dashboard-2026 && .venv/bin/python manage.py process_govee_mail
 ```
 
+The Render Blueprint's existing alert cron now runs this mailbox command before alert evaluation. Add `GOVEE_IMAP_USER` and `GOVEE_IMAP_PASSWORD` to that cron service; the other Govee IMAP settings are supplied by `render.yaml`.
+
 On a Windows dashboard host, `run_govee_mail_ingestion.cmd` performs the same operation. `run_airguard_jobs.cmd` independently attempts these alert steps every run:
 
 1. Evaluate verified subscriptions against fresh forecast rows.
