@@ -9,6 +9,7 @@ Outdoor weather on those rows is refreshed from Open-Meteo by `python manage.py 
 ## Implemented system
 
 - Current building and sensor views, bounded hourly history, CSV download, stale-data handling, and 60-second change polling.
+- Sensor readings remain current for 90 minutes by default so hourly Govee exports do not create false unavailable periods; configure `AIRGUARD_STALE_AFTER_MINUTES` when the collection interval changes.
 - English and Spanish interface text, keyboard-operable dialogs/tabs, semantic tables, and accessible chart descriptions.
 - Authoritative building/sensor manifest in `dashboard/sensor_manifest.py`; unlisted sensors are disabled by `seed_db` rather than deleted.
 - Token-authenticated Govee CSV and custom JSON ingestion with timestamp/value validation, raw-file archives, SHA-256 idempotency, and provenance links.

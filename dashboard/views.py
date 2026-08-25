@@ -26,7 +26,7 @@ from .models import Building, Forecast, IngestBatch, OutboundEmail, ProviderEven
 from .weather import refresh_forecast_weather_if_stale
 
 
-STALE_AFTER = timedelta(minutes=15)
+STALE_AFTER = timedelta(minutes=settings.AIRGUARD_STALE_AFTER_MINUTES)
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 DESIGN_TEMPLATES = {
     "bands": "dashboard/home_design_bands.html",

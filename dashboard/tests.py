@@ -133,13 +133,21 @@ class DashboardTests(TestCase):
         self.assertEqual(response.context["building"]["reporting"], 3)
         self.assertContains(response, "data-sensor-id", count=3)
 
+    def test_hourly_sensor_update_remains_current_for_ninety_minutes(self):
+        sensor = Building.objects.first().sensors.first()
+        latest = sensor.readings.order_by("-observed_at").first()
+        latest.observed_at = timezone.now() - timedelta(minutes=60)
+        latest.save(update_fields=("observed_at",))
+        response = self.client.get(reverse("dashboard:building", args=(sensor.building.slug,)))
+        self.assertFalse(response.context["building"]["sensors"][0]["is_stale"])
+
     def test_history_is_aggregated_and_bounded(self):
         sensor = Building.objects.first().sensors.first()
         seven_days = self.client.get(reverse("dashboard:readings_api", args=(sensor.id,)), {"range": "7d"}).json()["readings"]
         thirty_days = self.client.get(reverse("dashboard:readings_api", args=(sensor.id,)), {"range": "30d"}).json()["readings"]
         self.assertLessEqual(len(seven_days), 168)
         self.assertLessEqual(len(thirty_days), 120)
-        self.assertEqual(seven_days[-2]["data_status"], "historical")
+        self.assertEqual(seven_days[-3]["data_status"], "historical")
 
     def test_readings_csv_contains_quality_status(self):
         sensor = Building.objects.first().sensors.first()
