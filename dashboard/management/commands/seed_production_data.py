@@ -25,9 +25,11 @@ class Command(BaseCommand):
         readings_created = forecasts_created = 0
 
         for sensor_index, sensor in enumerate(Sensor.objects.filter(enabled=True)):
-            has_recent = sensor.readings.filter(observed_at__gte=now - timedelta(days=7)).exists()
-            preserve_imported_vmos = sensor.external_id.startswith("BGC-B") and sensor.readings.exists()
-            if not has_recent and not preserve_imported_vmos:
+            has_recent_import = sensor.readings.filter(
+                observed_at__gte=now - timedelta(days=7), ingest_batch__isnull=False
+            ).exists()
+            preserve_imported_vmos = sensor.external_id.startswith("BGC-B") and sensor.readings.filter(ingest_batch__isnull=False).exists()
+            if not has_recent_import and not preserve_imported_vmos:
                 rows = []
                 for hour in range(days_back * 24, -1, -1):
                     observed_at = now - timedelta(hours=hour)
