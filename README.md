@@ -39,6 +39,14 @@ Open `http://127.0.0.1:8000/`. `seed_demo` is for local display/testing only. Pr
 .venv\Scripts\python.exe manage.py seed_db
 ```
 
+For a first hosted deployment, initialize the manifest and add non-destructive example readings and forecasts with:
+
+```cmd
+.venv\Scripts\python.exe manage.py seed_production_data --days-back 30 --days-forward 30
+```
+
+This command never deletes imported Govee readings. It fills sensors without recent data with clearly marked `example` forecasts; future mailbox imports remain authoritative for BGC-B sensors.
+
 Generate secrets without installing another package:
 
 ```cmd
