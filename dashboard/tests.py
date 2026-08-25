@@ -15,6 +15,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.contrib.auth import get_user_model
+from django.db.models import F
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -135,13 +136,21 @@ class DashboardTests(TestCase):
         self.assertEqual(response.context["building"]["reporting"], 3)
         self.assertContains(response, "data-sensor-id", count=3)
 
-    def test_hourly_sensor_update_remains_current_for_ninety_minutes(self):
+    def test_old_sensor_reading_remains_available(self):
         sensor = Building.objects.first().sensors.first()
-        latest = sensor.readings.order_by("-observed_at").first()
-        latest.observed_at = timezone.now() - timedelta(minutes=60)
-        latest.save(update_fields=("observed_at",))
+        sensor.readings.update(observed_at=F("observed_at") - timedelta(days=30))
         response = self.client.get(reverse("dashboard:building", args=(sensor.building.slug,)))
-        self.assertFalse(response.context["building"]["sensors"][0]["is_stale"])
+        snapshot = next(item for item in response.context["building"]["sensors"] if item["id"] == sensor.id)
+        self.assertFalse(snapshot["is_stale"])
+        self.assertIsNotNone(snapshot["aqi"])
+
+    def test_sensor_without_readings_remains_unavailable(self):
+        sensor = Building.objects.first().sensors.first()
+        sensor.readings.all().delete()
+        response = self.client.get(reverse("dashboard:building", args=(sensor.building.slug,)))
+        snapshot = next(item for item in response.context["building"]["sensors"] if item["id"] == sensor.id)
+        self.assertTrue(snapshot["is_stale"])
+        self.assertIsNone(snapshot["aqi"])
 
     def test_history_is_aggregated_and_bounded(self):
         sensor = Building.objects.first().sensors.first()

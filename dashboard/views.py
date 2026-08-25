@@ -44,13 +44,14 @@ def _hourly_values(readings):
     return [(stamp, mean(values)) for stamp, values in sorted(grouped.items())]
 
 
-def _sensor_snapshot(sensor, now=None):
-    now = now or timezone.now()
+def _sensor_snapshot(sensor):
     latest = sensor.readings.order_by("-observed_at").first()
-    stale = not latest or now - latest.observed_at > STALE_AFTER
     aqi = None
-    if not stale:
-        hourly = _hourly_values(sensor.readings.filter(observed_at__gte=now - timedelta(hours=12)).values_list("observed_at", "pm25"))
+    if latest:
+        hourly = _hourly_values(sensor.readings.filter(
+            observed_at__gte=latest.observed_at - timedelta(hours=12),
+            observed_at__lte=latest.observed_at,
+        ).values_list("observed_at", "pm25"))
         concentration = nowcast([value for _, value in reversed(hourly)])
         aqi = pm25_to_aqi(concentration) if concentration is not None else None
     category = aqi_category(aqi) if aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
@@ -63,12 +64,12 @@ def _sensor_snapshot(sensor, now=None):
         "category": category["label"],
         "category_class": category["css_class"],
         "observed_at": latest.observed_at if latest else None,
-        "is_stale": stale,
+        "is_stale": latest is None,
     }
 
 
-def _building_summary(building, now=None):
-    sensors = [_sensor_snapshot(sensor, now) for sensor in building.sensors.filter(enabled=True)]
+def _building_summary(building):
+    sensors = [_sensor_snapshot(sensor) for sensor in building.sensors.filter(enabled=True)]
     valid = [sensor["aqi"] for sensor in sensors if sensor["aqi"] is not None]
     aqi = round(median(valid)) if valid else None
     category = aqi_category(aqi) if aqi is not None else {"label": "Unavailable", "css_class": "unavailable"}
@@ -88,7 +89,7 @@ def _building_summary(building, now=None):
 
 def _network_status():
     now = timezone.now()
-    snapshots = [_sensor_snapshot(sensor, now) for sensor in Sensor.objects.filter(enabled=True).select_related("building")]
+    snapshots = [_sensor_snapshot(sensor) for sensor in Sensor.objects.filter(enabled=True).select_related("building")]
     valid = [sensor["aqi"] for sensor in snapshots if sensor["aqi"] is not None]
     total = len(snapshots)
     current_aqi = round(median(valid)) if len(valid) >= (total + 1) // 2 and valid else None
