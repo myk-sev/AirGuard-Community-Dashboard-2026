@@ -7,6 +7,7 @@ from datetime import UTC, timedelta
 from email.message import EmailMessage
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
+from zoneinfo import ZoneInfo
 
 from django.core import mail
 from django.core.cache import cache
@@ -323,6 +324,22 @@ class DashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["created"], 2001)
 
+    @override_settings(GOVEE_SOURCE_TIMEZONE="Etc/GMT-5")
+    def test_govee_source_timezone_converts_phone_timestamps(self):
+        call_command("seed_db", verbosity=0)
+        expected = timezone.now().replace(second=0, microsecond=0) - timedelta(minutes=10)
+        phone_time = expected.astimezone(ZoneInfo("Etc/GMT-5"))
+        content = ("Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)\n" f"{phone_time.strftime('%d/%m/%Y %I:%M:%S %p')},10\n").encode()
+        upload = SimpleUploadedFile("BGC-B6_export_timezone.csv", content, content_type="text/csv")
+        response = self.client.post(
+            reverse("dashboard:measurements", args=("govee",)),
+            {"file": upload},
+            HTTP_AUTHORIZATION="Bearer test-ingest-token",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Reading.objects.get(ingest_batch__isnull=False).observed_at, expected)
+
     @override_settings(GOVEE_MAIL_ALLOWED_SENDER="noreply@govee.example")
     def test_mailbox_processes_zip_and_archives_message(self):
         call_command("seed_db", verbosity=0)
@@ -372,8 +389,21 @@ class DashboardTests(TestCase):
 
         self.assertEqual(mailbox.seen, [b"1", b"2"])
         self.assertIn(("search", (None, "UNSEEN", "FROM", '"no-reply@govee.com"')), mailbox.uid_calls)
+        self.assertIn(("fetch", (b"1", "(BODY.PEEK[])")), mailbox.uid_calls)
         self.assertIn("Processed 1; ignored 1; failed 0", output.getvalue())
         self.assertEqual(Reading.objects.filter(ingest_batch__isnull=False).count(), 1)
+
+    @override_settings(
+        GOVEE_IMAP_HOST="imap.example.org",
+        GOVEE_IMAP_USER="airguard@example.org",
+        GOVEE_IMAP_PASSWORD="app-password",
+        GOVEE_MAIL_ALLOWED_SENDER="no-reply@govee.com",
+    )
+    def test_mailbox_all_option_includes_read_messages(self):
+        mailbox = FakeImap({})
+        with patch("dashboard.management.commands.process_govee_mail.imaplib.IMAP4_SSL", return_value=mailbox):
+            call_command("process_govee_mail", "--all", stdout=io.StringIO())
+        self.assertIn(("search", (None, "ALL", "FROM", '"no-reply@govee.com"')), mailbox.uid_calls)
 
     @override_settings(
         GOVEE_IMAP_HOST="imap.example.org",

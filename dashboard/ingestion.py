@@ -39,7 +39,8 @@ def _observed_at(value, sensor):
                 pass
     if observed_at is None:
         raise ValueError("Measurement time is not a supported date format.")
-    observed_at = observed_at.replace(tzinfo=ZoneInfo(sensor.timezone)) if timezone.is_naive(observed_at) else observed_at
+    source_timezone = settings.GOVEE_SOURCE_TIMEZONE or sensor.timezone
+    observed_at = observed_at.replace(tzinfo=ZoneInfo(source_timezone)) if timezone.is_naive(observed_at) else observed_at
     if observed_at > timezone.now() + timedelta(minutes=settings.AIRGUARD_MAX_FUTURE_MINUTES):
         raise ValueError("Measurement time is too far in the future.")
     return observed_at

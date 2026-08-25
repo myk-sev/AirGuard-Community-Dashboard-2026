@@ -11,6 +11,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=25)
+        parser.add_argument("--all", action="store_true", help="Include previously read messages for an idempotent backfill")
 
     def process(self, raw_message):
         return process_message(raw_message)
@@ -28,13 +29,13 @@ class Command(BaseCommand):
             status, _ = mailbox.select(settings.GOVEE_IMAP_FOLDER)
             if status != "OK":
                 raise CommandError("The mailbox folder could not be opened.")
-            status, data = mailbox.uid("search", None, "UNSEEN", "FROM", f'"{settings.GOVEE_MAIL_ALLOWED_SENDER}"')
+            status, data = mailbox.uid("search", None, "ALL" if options["all"] else "UNSEEN", "FROM", f'"{settings.GOVEE_MAIL_ALLOWED_SENDER}"')
             if status != "OK":
                 raise CommandError("The mailbox search failed.")
             for message_uid in data[0].split()[-options["limit"]:]:
                 uid = message_uid.decode(errors="replace")
                 self.stdout.write(f"Processing Govee message {uid}")
-                status, payload = mailbox.uid("fetch", message_uid, "(RFC822)")
+                status, payload = mailbox.uid("fetch", message_uid, "(BODY.PEEK[])")
                 raw_message = next((item[1] for item in payload or [] if isinstance(item, tuple)), None)
                 if status != "OK" or not raw_message:
                     failed += 1

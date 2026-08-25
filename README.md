@@ -104,7 +104,7 @@ On a host that shares the dashboard's media disk, mailbox ingestion can write di
 30 * * * * cd /path/to/AirGuard-Community-Dashboard-2026 && .venv/bin/python manage.py process_govee_mail
 ```
 
-Render cron services do not share the web service's persistent disk. The Blueprint therefore runs `forward_govee_mail`, which reads each sensor's separate unread email and uploads its CSV through the authenticated dashboard endpoint. The web service then validates, archives, deduplicates, and bulk-imports the file on its own disk and database. A message is marked read only after its upload succeeds; one rejected sensor export does not prevent later messages from being attempted.
+Render cron services do not share the web service's persistent disk. The Blueprint therefore runs `forward_govee_mail`, which reads each sensor's separate unread email and uploads its CSV through the authenticated dashboard endpoint. The web service then validates, archives, deduplicates, and bulk-imports the file on its own disk and database. A message is marked read only after its upload succeeds; one rejected sensor export does not prevent later messages from being attempted. `GOVEE_SOURCE_TIMEZONE` records the VMOS phone's export timezone so naive CSV timestamps are converted correctly; change it if the phone timezone changes. Use `--all` only for an idempotent backfill of messages already marked read.
 
 On a Windows dashboard host, `run_govee_mail_ingestion.cmd` performs the same operation. `run_airguard_jobs.cmd` independently attempts these alert steps every run:
 

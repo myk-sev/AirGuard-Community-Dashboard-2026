@@ -48,6 +48,8 @@ services:
         sync: false
       - key: GOVEE_IMAP_PASSWORD
         sync: false
+      - key: GOVEE_SOURCE_TIMEZONE
+        value: Etc/GMT-5
       - key: AIRGUARD_WEATHER_LATITUDE
         value: "41.6881"
       - key: AIRGUARD_WEATHER_LONGITUDE
