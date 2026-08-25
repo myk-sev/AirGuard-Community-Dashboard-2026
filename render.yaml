@@ -44,10 +44,16 @@ services:
         value: "True"
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      - key: GOVEE_IMAP_USER
+        sync: false
+      - key: GOVEE_IMAP_PASSWORD
+        sync: false
       - key: AIRGUARD_WEATHER_LATITUDE
         value: "41.6881"
       - key: AIRGUARD_WEATHER_LONGITUDE
         value: "-86.2355"
+      - key: AIRGUARD_STALE_AFTER_MINUTES
+        value: "90"
 
   - type: cron
     name: airguard-alert-delivery
@@ -129,9 +135,15 @@ services:
       - key: GOVEE_MAIL_ALLOWED_SENDER
         value: no-reply@govee.com
       - key: GOVEE_IMAP_USER
-        sync: false
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: GOVEE_IMAP_USER
       - key: GOVEE_IMAP_PASSWORD
-        sync: false
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: GOVEE_IMAP_PASSWORD
 
 databases:
   - name: airguard-postgres
