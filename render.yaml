@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: airguard-community-dashboard-2026
+    name: air-guard-aqi
     runtime: python
     plan: starter
     branch: production
@@ -72,64 +72,64 @@ services:
       - key: DJANGO_SECRET_KEY
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: DJANGO_SECRET_KEY
       - key: DJANGO_DEBUG
         value: "False"
       - key: AIRGUARD_SITE_URL
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: AIRGUARD_SITE_URL
       - key: AIRGUARD_INGEST_TOKEN
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: AIRGUARD_INGEST_TOKEN
       - key: DJANGO_EMAIL_BACKEND
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: DJANGO_EMAIL_BACKEND
       - key: EMAIL_HOST
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: EMAIL_HOST
       - key: EMAIL_PORT
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: EMAIL_PORT
       - key: EMAIL_HOST_USER
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: EMAIL_HOST_USER
       - key: EMAIL_HOST_PASSWORD
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: EMAIL_HOST_PASSWORD
       - key: EMAIL_USE_TLS
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: EMAIL_USE_TLS
       - key: DEFAULT_FROM_EMAIL
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: DEFAULT_FROM_EMAIL
       - key: AIRGUARD_WEATHER_LATITUDE
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: AIRGUARD_WEATHER_LATITUDE
       - key: AIRGUARD_WEATHER_LONGITUDE
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: AIRGUARD_WEATHER_LONGITUDE
       - key: GOVEE_IMAP_HOST
         value: imap.fastmail.com
@@ -142,12 +142,12 @@ services:
       - key: GOVEE_IMAP_USER
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: GOVEE_IMAP_USER
       - key: GOVEE_IMAP_PASSWORD
         fromService:
           type: web
-          name: airguard-community-dashboard-2026
+          name: air-guard-aqi
           envVarKey: GOVEE_IMAP_PASSWORD
 
 databases:
