@@ -20,7 +20,7 @@ class Command(BaseCommand):
         days_back = max(1, options["days_back"])
         days_forward = max(1, options["days_forward"])
         call_command("seed_db", verbosity=0)
-        now = timezone.now().replace(minute=0, second=0, microsecond=0)
+        now = timezone.now().replace(second=0, microsecond=0)
         rng = random.Random(20260825)
         readings_created = forecasts_created = 0
 
