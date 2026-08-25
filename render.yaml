@@ -49,7 +49,7 @@ services:
       - key: GOVEE_IMAP_PASSWORD
         sync: false
       - key: GOVEE_SOURCE_TIMEZONE
-        value: Etc/GMT-6
+        value: Etc/GMT-8
       - key: AIRGUARD_WEATHER_LATITUDE
         value: "41.6881"
       - key: AIRGUARD_WEATHER_LONGITUDE
