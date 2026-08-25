@@ -324,11 +324,11 @@ class DashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["created"], 2001)
 
-    @override_settings(GOVEE_SOURCE_TIMEZONE="Etc/GMT-5")
+    @override_settings(GOVEE_SOURCE_TIMEZONE="Etc/GMT-6")
     def test_govee_source_timezone_converts_phone_timestamps(self):
         call_command("seed_db", verbosity=0)
         expected = timezone.now().replace(second=0, microsecond=0) - timedelta(minutes=10)
-        phone_time = expected.astimezone(ZoneInfo("Etc/GMT-5"))
+        phone_time = expected.astimezone(ZoneInfo("Etc/GMT-6"))
         content = ("Time(DD/MM/YYYY h:mm:ss A),PM2.5(ug/m3)\n" f"{phone_time.strftime('%d/%m/%Y %I:%M:%S %p')},10\n").encode()
         upload = SimpleUploadedFile("BGC-B6_export_timezone.csv", content, content_type="text/csv")
         response = self.client.post(
