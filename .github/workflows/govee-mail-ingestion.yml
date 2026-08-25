@@ -1,0 +1,39 @@
+name: Govee mail ingestion
+
+on:
+  schedule:
+    - cron: "30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: govee-mail-ingestion
+  cancel-in-progress: false
+
+jobs:
+  forward:
+    if: github.event_name == 'workflow_dispatch' || vars.AIRGUARD_ENABLE_GOVEE_INGESTION == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DJANGO_SECRET_KEY: github-action-only-secret-key-not-used-by-the-dashboard
+      DJANGO_DEBUG: "True"
+      GOVEE_IMAP_HOST: imap.fastmail.com
+      GOVEE_IMAP_PORT: "993"
+      GOVEE_IMAP_TIMEOUT_SECONDS: "30"
+      GOVEE_IMAP_USER: ${{ secrets.GOVEE_IMAP_USER }}
+      GOVEE_IMAP_PASSWORD: ${{ secrets.GOVEE_IMAP_PASSWORD }}
+      GOVEE_IMAP_FOLDER: INBOX
+      GOVEE_MAIL_ALLOWED_SENDER: no-reply@govee.com
+      AIRGUARD_UPLOAD_URL: ${{ vars.AIRGUARD_UPLOAD_URL }}
+      AIRGUARD_INGEST_TOKEN: ${{ secrets.AIRGUARD_INGEST_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python manage.py forward_govee_mail

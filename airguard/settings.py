@@ -21,6 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).casefold() in {'1', 'true', 'yes', 'on'}
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -30,9 +34,10 @@ if not SECRET_KEY:
     raise ImproperlyConfigured('Set DJANGO_SECRET_KEY in .env before starting Django.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [item.strip() for item in os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if item.strip()]
+CSRF_TRUSTED_ORIGINS = [item.strip() for item in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if item.strip()]
 
 
 # Application definition
@@ -56,6 +61,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'airguard.urls'
 
@@ -83,7 +90,7 @@ WSGI_APPLICATION = 'airguard.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DJANGO_DATABASE_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -123,6 +130,62 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'var' / 'static'
+MEDIA_ROOT = BASE_DIR / 'var' / 'media'
+MEDIA_URL = 'media/'
+if not DEBUG:
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
+
+AIRGUARD_SITE_URL = os.environ.get('AIRGUARD_SITE_URL', 'http://127.0.0.1:8000')
+AIRGUARD_UPLOAD_URL = os.environ.get('AIRGUARD_UPLOAD_URL', f'{AIRGUARD_SITE_URL.rstrip("/")}/api/v1/measurements/govee/')
+AIRGUARD_INGEST_TOKEN = os.environ.get('AIRGUARD_INGEST_TOKEN', '')
+AIRGUARD_POSTMARK_WEBHOOK_TOKEN = os.environ.get('AIRGUARD_POSTMARK_WEBHOOK_TOKEN', '')
+AIRGUARD_MAX_UPLOAD_BYTES = int(os.environ.get('AIRGUARD_MAX_UPLOAD_BYTES', 20 * 1024 * 1024))
+AIRGUARD_MAX_PM25 = float(os.environ.get('AIRGUARD_MAX_PM25', 2000))
+AIRGUARD_MAX_FUTURE_MINUTES = int(os.environ.get('AIRGUARD_MAX_FUTURE_MINUTES', 10))
+AIRGUARD_FORECAST_MAX_AGE_HOURS = int(os.environ.get('AIRGUARD_FORECAST_MAX_AGE_HOURS', 12))
+AIRGUARD_ALERT_COOLDOWN_HOURS = int(os.environ.get('AIRGUARD_ALERT_COOLDOWN_HOURS', 24))
+AIRGUARD_SIGNUP_LIMIT_PER_HOUR = int(os.environ.get('AIRGUARD_SIGNUP_LIMIT_PER_HOUR', 20))
+AIRGUARD_EMAIL_MAX_ATTEMPTS = int(os.environ.get('AIRGUARD_EMAIL_MAX_ATTEMPTS', 8))
+AIRGUARD_VERIFY_MAX_AGE_HOURS = int(os.environ.get('AIRGUARD_VERIFY_MAX_AGE_HOURS', 48))
+
+GOVEE_IMAP_HOST = os.environ.get('GOVEE_IMAP_HOST', '')
+GOVEE_IMAP_PORT = int(os.environ.get('GOVEE_IMAP_PORT', 993))
+GOVEE_IMAP_TIMEOUT_SECONDS = int(os.environ.get('GOVEE_IMAP_TIMEOUT_SECONDS', 30))
+GOVEE_IMAP_USER = os.environ.get('GOVEE_IMAP_USER', '')
+GOVEE_IMAP_PASSWORD = os.environ.get('GOVEE_IMAP_PASSWORD', '')
+GOVEE_IMAP_FOLDER = os.environ.get('GOVEE_IMAP_FOLDER', 'INBOX')
+GOVEE_MAIL_ALLOWED_SENDER = os.environ.get('GOVEE_MAIL_ALLOWED_SENDER', '')
+
+EMAIL_BACKEND = os.environ.get(
+    'DJANGO_EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AirGuard Alerts <alerts@localhost>')
+LOGIN_URL = '/admin/login/'
+
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', not DEBUG)
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', 31536000 if not DEBUG else 0))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'root': {'handlers': ['console'], 'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

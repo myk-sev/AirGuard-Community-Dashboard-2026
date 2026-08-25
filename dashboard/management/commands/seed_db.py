@@ -1,49 +1,30 @@
-import pandas as pd
-
-from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from dashboard.models import Building, Forecast, Reading, Sensor
-
-
-BUILDINGS = (
-    ("Robinson Center", "robinson-center", "school"),
-    ("Boys and Girls Club Main Building", "bgc-main", "school"),
-    ("Boys and Girls Club Satellite Building", "bgc-satellite", "school"),
-)
-PLACEMENTS = (("gym", "Gym"), ("hallway", "Hallway"), ("entrance", "Entrance"))
+from dashboard.models import Building, Sensor
+from dashboard.sensor_manifest import BUILDINGS, SENSORS
 
 
 class Command(BaseCommand):
-    help = "Create deterministic AirGuard development data"
+    help = "Create or update the production buildings and sensors"
 
     def handle(self, *args, **options):
-        Reading.objects.all().delete()
-        Forecast.objects.all().delete()
-        Sensor.objects.all().delete()
-        Building.objects.all().delete()
-
-        now = timezone.now().replace(second=0, microsecond=0)
-        sensors = []
-        # TODO: store this outside of code
         for building_index, (name, slug, icon) in enumerate(BUILDINGS):
-            # FIXME: doesn't work with get_or_create(), could result in problems with adding new buildings
-            building = Building.objects.create(
-                name=name,
+            Building.objects.update_or_create(
                 slug=slug,
-                icon=icon,
-                display_order=building_index
+                defaults={"name": name, "icon": icon, "display_order": building_index},
             )
-
-            for placement_index, (placement, label) in enumerate(PLACEMENTS):
-                sensor = Sensor.objects.get_or_create(
-                    building=building,
-                    name=label,
-                    placement=placement,
-                    external_id=f"{slug}-{placement}",
-                )
-                sensors.append(sensor)
-
-
-        self.stdout.write(self.style.SUCCESS(f"Database has {len(sensors)} sensors"))
+        buildings = {building.slug: building for building in Building.objects.filter(slug__in=[item[1] for item in BUILDINGS])}
+        for display_order, (external_id, building_slug, name, placement) in enumerate(SENSORS):
+            Sensor.objects.update_or_create(
+                external_id=external_id,
+                defaults={
+                    "building": buildings[building_slug],
+                    "name": name,
+                    "placement": placement,
+                    "source": "govee",
+                    "enabled": True,
+                    "display_order": display_order,
+                },
+            )
+        Sensor.objects.exclude(external_id__in=[item[0] for item in SENSORS]).update(enabled=False)
+        self.stdout.write(self.style.SUCCESS(f"Database has {len(SENSORS)} configured sensors"))

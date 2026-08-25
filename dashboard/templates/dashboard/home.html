@@ -2,20 +2,20 @@
 {% block title %}AirGuard | Community indoor air{% endblock %}
 {% block content %}
   <section class="page-inner" aria-labelledby="home-title">
-    <div id="last-updated" style="display:none">{{ status.epoch_updated_at }}</div>
+    <span id="last-updated" hidden>{{ status.epoch_updated_at }}</span>
     <h1 id="home-title" data-i18n="communityStatus">Indoor Air Quality Readings</h1>
     <p class="lede" data-i18n="statusIntro">Monitor current air quality conditions across community spaces using data collected from AirGuard sensors.</p>
     <div class="status-banner {{ status.category_class }}">
       <div>
-        {% if status.updated_at %}<p class="status-updated"><span data-i18n="updated">Updated</span> {{ status.updated_at|timesince }} <span data-i18n="ago">ago</span></p>{% endif %}
+        {% if status.updated_at %}<p class="status-updated"><span data-i18n="updated">Updated</span> <time data-relative-time datetime="{{ status.updated_at|date:'c' }}">{{ status.updated_at|timesince }} ago</time></p>{% endif %}
         <div class="status-score"><strong>{{ status.aqi|default:'—' }}</strong><button class="aqi-button" type="button" data-open-aqi>AQI <span aria-hidden="true">?</span></button></div>
         <p class="category-line"><span class="status-dot {{ status.category_class }}" aria-hidden="true"></span><span data-i18n="{{ status.category_class }}">{{ status.category }}</span></p>
       </div>
       <div>
-        <p class="status-message" data-i18n="statusMessage">{{ status.message }}</p>
+        <p class="status-message" data-i18n="{{ status.message_key }}">{{ status.message }}</p>
         <div class="status-meta">
           <span><strong data-i18n="current">Current:</strong> {{ status.reporting }} <span data-i18n="of">of</span> {{ status.total }} <span data-i18n="reporting">Sensors Reporting</span></span>
-          <span><strong data-i18n="forecast">Forecast:</strong> <span data-i18n="{% if status.forecast_aqi <= 50 %}good{% elif status.forecast_aqi <= 100 %}moderate{% else %}sensitive{% endif %}">{{ status.forecast_category }}</span>{% if status.forecast_at %} {{ status.forecast_at|date:'g A' }}{% endif %}</span>
+          <span><strong data-i18n="forecast">Forecast:</strong> <span data-i18n="{{ status.forecast_category_class }}">{{ status.forecast_category }}</span>{% if status.forecast_at %} {{ status.forecast_at|date:'g A' }}{% endif %}</span>
         </div>
       </div>
     </div>
@@ -25,10 +25,10 @@
 {% endblock %}
 {% block dialogs %}
   <dialog id="aqi-dialog" aria-labelledby="aqi-title">
-    <div class="dialog-header"><div><p class="eyebrow">Air Quality Index</p><h2 id="aqi-title" data-i18n="whatAqi">What does AQI mean?</h2></div><button class="icon-button" type="button" data-close-aqi aria-label="Close AQI information">×</button></div>
+    <div class="dialog-header"><div><p class="eyebrow">Air Quality Index</p><h2 id="aqi-title" data-i18n="whatAqi">What does AQI mean?</h2></div><button class="icon-button" type="button" data-close-aqi aria-label="Close AQI information" data-i18n-label="closeAqi">×</button></div>
     <div class="dialog-body">
       <p data-i18n="aqiExplanation">AQI turns a PM2.5 measurement into a health category. A higher number means more particle pollution and a greater chance of health effects.</p>
-      <div class="aqi-scale" aria-label="AQI category examples">
+      <div class="aqi-scale" aria-label="AQI category examples" data-i18n-label="aqiExamples">
         <div class="aqi-row good"><strong>0–50</strong><span><b data-i18n="good">Good</b><br><span data-i18n="goodGuidance">Air quality is satisfactory for most people.</span></span></div>
         <div class="aqi-row moderate"><strong>51–100</strong><span><b data-i18n="moderate">Moderate</b><br><span data-i18n="moderateGuidance">People unusually sensitive to particle pollution may notice effects.</span></span></div>
         <div class="aqi-row sensitive"><strong>101–150</strong><span><b data-i18n="sensitive">Unhealthy for sensitive groups</b><br><span data-i18n="sensitiveGuidance">Children and people with heart or lung conditions should reduce prolonged exertion.</span></span></div>

@@ -4,17 +4,20 @@
   <section class="page-inner form-page" aria-labelledby="notification-title">
     {% if audience == 'facility' %}<p class="eyebrow" data-i18n="facilityEyebrow">Facility manager access</p>{% endif %}
     <h1 id="notification-title" data-i18n="{% if audience == 'facility' %}facilityTitle{% else %}signupTitle{% endif %}">{% if audience == 'facility' %}Building alert notifications{% else %}Get air quality notifications{% endif %}</h1>
-    <p class="lede" data-i18n="{% if audience == 'facility' %}facilityIntro{% else %}signupIntro{% endif %}">{% if audience == 'facility' %}This unlisted form stores building-level notification preferences.{% else %}Choose a building and the AQI level when you want to be notified.{% endif %}</p>
-    {% if saved %}<div class="success-message" role="status" data-i18n="saved">Your notification preference has been saved.</div>{% endif %}
+    <p class="lede" data-i18n="{% if audience == 'facility' %}facilityIntro{% else %}signupIntro{% endif %}">{% if audience == 'facility' %}Configure verified building-level forecast alerts.{% else %}Choose a building and a forecast threshold. We will email you when the available forecast is expected to cross it.{% endif %}</p>
+    {% if state == 'verification' %}<div class="success-message" role="status" data-i18n="verificationQueued">Check your email to confirm and activate this alert.</div>{% endif %}
+    {% if state == 'updated' %}<div class="success-message" role="status" data-i18n="saved">Your active alert preference has been updated.</div>{% endif %}
     <form method="post" class="notification-form">
       {% csrf_token %}
       {{ form.locale }}
+      {{ form.non_field_errors }}
       <div class="form-grid">
         <label class="full"><span data-i18n="email">Email address</span>{{ form.email }}{{ form.email.errors }}</label>
         <label><span data-i18n="building">Building</span>{{ form.building }}{{ form.building.errors }}</label>
-        <label><span data-i18n="notifyAt">Notify me at</span>{{ form.threshold }}{{ form.threshold.errors }}</label>
+        <label><span data-i18n="notifyAt">Notify me at</span>{{ form.alert_rule }}{{ form.alert_rule.errors }}</label>
       </div>
-      <label class="consent"><input type="checkbox" required><span data-i18n="consent">I agree to receive AirGuard email notifications. Email delivery will be added in a later phase.</span></label>
+      <p class="muted" data-i18n="benchmarkNote">EPA and WHO choices use rolling 24-hour PM2.5 averages as indoor health-context benchmarks; they are not regulatory determinations.</p>
+      <label class="consent">{{ form.consent }}<span data-i18n="consent">I agree to receive AirGuard email notifications and understand that I can unsubscribe at any time.</span></label>{{ form.consent.errors }}
       <button class="button button-primary" type="submit" data-i18n="savePreference">Save preference</button>
     </form>
   </section>

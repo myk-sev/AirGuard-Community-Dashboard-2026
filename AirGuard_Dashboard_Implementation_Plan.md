@@ -1,4 +1,6 @@
-# AirGuard Community Dashboard Implementation Plan
+# AirGuard Community Dashboard Implementation Plan and Status
+
+Status as of August 24, 2026: the non-forecast application and operational pipeline described below are implemented. Forecast generation/model development remains separate; the dashboard only consumes fresh, provenance-labeled `Forecast` rows. See `README.md` for deployment and activation instructions.
 
 ## 1. Purpose
 
@@ -15,7 +17,7 @@ Research references:
 ## 2. Audience
 
 - Primary: community members seeking clear local indoor-air information.
-- Secondary: facility managers signing up for building alerts through an unlisted URL provided manually.
+- Secondary: authenticated staff signing up for building alerts through an unlisted, `noindex` URL.
 - Facility managers will not receive a separate dashboard, sensor comparison tools, or operational controls.
 
 ## 3. Mockup Review Gate
@@ -24,7 +26,7 @@ Create a responsive, clickable prototype before beginning Django implementation.
 
 1. Homepage with the citywide indoor-network median AQI, next-24-hour prediction, reporting coverage, update time, one action message, and three building links near the bottom.
 2. Current Readings page with three building tiles, distinct icons, names, current median categories, and freshness indicators.
-3. Building page with gym, hallway, and entrance sensor widgets plus short educational guidance.
+3. Building page with widgets for every enabled sensor in the authoritative manifest plus short educational guidance.
 4. Sensor History dialog with current AQI and PM2.5, History and Forecast tabs, a time-range selector, accessible chart, equivalent table, and CSV download.
 5. Sensor Forecast dialog with projected PM2.5/AQI, temperature, relative humidity, wind speed, wind direction, peak category, forecast time, and action guidance.
 6. Public notification form.
@@ -62,7 +64,7 @@ Implementation will begin only after the mockups are reviewed and approved.
 
 ### Building Page
 
-- Show one widget each for the gym, hallway, and entrance.
+- Show one widget for each enabled sensor configured for the building.
 - Display AQI as the dominant value with PM2.5 in `micrograms/m3` beneath it.
 - Include the category, observation timestamp, and freshness state.
 - Open the sensor dialog when a widget is selected.
@@ -80,10 +82,10 @@ Implementation will begin only after the mockups are reviewed and approved.
 ### Notifications
 
 - Public route: `/notifications/`.
-- Facility route: `/facility-notifications/`, excluded from navigation and search indexing.
-- Collect email, building, AQI category threshold, language, and audience.
-- Offer thresholds for Moderate, Unhealthy for Sensitive Groups, and Unhealthy or above.
-- Store preferences only. Do not generate or send email in this release.
+- Facility route: `/facility-notifications/`, staff-authenticated and excluded from navigation and search indexing.
+- Collect email, building, AQI/WHO/EPA alert rule, language, audience, and explicit consent.
+- Verify the address before activation and provide a signed unsubscribe link.
+- Evaluate fresh forecasts and send idempotent alert email through a retrying database outbox.
 - Resubmitting an existing email, building, and audience combination updates the stored preference.
 
 ### Additional Resources
@@ -96,7 +98,7 @@ Implementation will begin only after the mockups are reviewed and approved.
 - Use Python 3.12 or newer through the project `.venv`.
 - Use Django 5.2 LTS with Django templates, SQLite, plain CSS, and minimal vanilla JavaScript.
 - Serve pages and replaceable mock JSON endpoints from one Django process at `127.0.0.1:8000`.
-- Use Django internationalization with English and Spanish locale-prefixed routes.
+- Use English server-rendered content with an English/Spanish client-side language control.
 - Poll current data every 60 seconds; do not use WebSockets.
 - Mark a sensor unavailable when its newest sample is more than 15 minutes old.
 - Calculate PM2.5 AQI with EPA NowCast and current EPA breakpoints.
@@ -105,10 +107,12 @@ Implementation will begin only after the mockups are reviewed and approved.
 Minimal data models:
 
 - Building: slug, name, icon, display order.
-- Sensor: building, name, placement, external identifier.
-- Reading: sensor, observation time, PM2.5.
-- Forecast: sensor, forecast time, PM2.5, temperature, relative humidity, wind speed, wind direction.
-- Subscription: email, building, AQI threshold, locale, audience, created and updated times.
+- Sensor: building, public name, placement, external identifier, source, enabled state, time zone, calibration, and display order.
+- Reading: sensor, observation time, PM2.5, and optional ingest-batch provenance.
+- Forecast: sensor, forecast time, PM2.5, weather fields, generation time, source, and run ID.
+- Subscription: email, building, threshold kind/value, locale, audience, consent/verification state, alert state, and timestamps.
+- InboundMessage/IngestBatch: immutable raw evidence, deduplication hashes, results, and errors.
+- AlertEvent/OutboundEmail/Suppression/ProviderEvent: idempotent evaluation, delivery/retry state, and provider feedback.
 
 ## 7. API Interfaces
 
@@ -119,6 +123,10 @@ Minimal data models:
 - `GET /api/v1/sensors/<id>/readings.csv?range=24h|7d|30d`
 - `GET /api/v1/sensors/<id>/forecast/`
 - `POST /api/v1/subscriptions/`
+- `POST /api/v1/measurements/govee/`
+- `POST /api/v1/measurements/custom/`
+- `POST /api/v1/email-events/postmark/`
+- `GET /health/`
 
 Use timezone-aware ISO 8601 timestamps. Reading responses expose PM2.5, AQI, category, observation time, and data-quality state. Forecast responses additionally expose temperature, relative humidity, wind speed, and wind direction.
 
@@ -155,8 +163,9 @@ WCAG 2.2 Level AA conformance is an acceptance requirement.
 Required:
 
 - `Django==5.2.16`
-- Chart.js 4.x, version-pinned and vendored as a static browser asset.
-- Lucide, version-pinned and vendored as a static browser asset.
+- `waitress==3.0.2`
+- `whitenoise==6.12.0`
+- Minimal native SVG charts and text/icon treatments; no browser package runtime is required.
 
 Included without separate installation:
 
@@ -178,15 +187,12 @@ Do not add Django REST Framework, CORS middleware, Bootstrap, Tailwind, jQuery, 
 - Verify responsive layouts at 320, 768, and 1440 CSS pixels and at 200 percent text zoom.
 - Confirm weather information is secondary, readable, correctly labeled with units, and available without interpreting a chart.
 
-## 12. Explicitly Outside Version 1
+## 12. Remaining Outside the Implemented Scope
 
-- Live external sensor integration
-- Live external weather or forecast integration
-- Email generation or delivery
-- User accounts or facility dashboards
+- Forecast model/generation and live external weather integration
+- General public user accounts or a separate facility dashboard
 - Sensor comparison tools
 - Maps, search, sorting, and favorites
-- Analytics and administrative reporting
-- Production deployment configuration
-- Production database migration
-
+- Product analytics and custom administrative reporting beyond Django admin/health data
+- Multi-host production database migration
+- External DNS/TLS, email-provider verification, backup-service configuration, and Task Scheduler activation
