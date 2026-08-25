@@ -1,0 +1,112 @@
+services:
+  - type: web
+    name: airguard-community-dashboard-2026
+    runtime: python
+    plan: starter
+    branch: production
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate
+    startCommand: gunicorn airguard.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile -
+    healthCheckPath: /health/
+    autoDeployTrigger: checksPass
+    disk:
+      name: airguard-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: airguard-postgres
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: AIRGUARD_DATA_DIR
+        value: /var/data
+      - key: AIRGUARD_SITE_URL
+        value: https://airguard-community-dashboard-2026.onrender.com
+      - key: AIRGUARD_INGEST_TOKEN
+        generateValue: true
+      - key: AIRGUARD_POSTMARK_WEBHOOK_TOKEN
+        generateValue: true
+      - key: DJANGO_EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+
+  - type: cron
+    name: airguard-alert-delivery
+    runtime: python
+    plan: starter
+    branch: production
+    schedule: "*/15 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py evaluate_alerts && python manage.py send_outbox
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: airguard-postgres
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: AIRGUARD_SITE_URL
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: AIRGUARD_SITE_URL
+      - key: DJANGO_EMAIL_BACKEND
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: DJANGO_EMAIL_BACKEND
+      - key: EMAIL_HOST
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: EMAIL_HOST
+      - key: EMAIL_PORT
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: EMAIL_PORT
+      - key: EMAIL_HOST_USER
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: EMAIL_HOST_USER
+      - key: EMAIL_HOST_PASSWORD
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: EMAIL_HOST_PASSWORD
+      - key: EMAIL_USE_TLS
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: EMAIL_USE_TLS
+      - key: DEFAULT_FROM_EMAIL
+        fromService:
+          type: web
+          name: airguard-community-dashboard-2026
+          envVarKey: DEFAULT_FROM_EMAIL
+
+databases:
+  - name: airguard-postgres
+    plan: basic-256mb

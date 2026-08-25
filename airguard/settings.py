@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -38,6 +39,10 @@ DEBUG = env_bool('DJANGO_DEBUG', True)
 
 ALLOWED_HOSTS = [item.strip() for item in os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if item.strip()]
 CSRF_TRUSTED_ORIGINS = [item.strip() for item in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if item.strip()]
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 
 # Application definition
@@ -87,7 +92,10 @@ WSGI_APPLICATION = 'airguard.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if os.environ.get('PGHOST'):
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=60)}
+    DATABASES['default']['CONN_HEALTH_CHECKS'] = True
+elif os.environ.get('PGHOST'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -154,7 +162,8 @@ if not DEBUG:
         'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
     }
 
-AIRGUARD_SITE_URL = os.environ.get('AIRGUARD_SITE_URL', 'http://127.0.0.1:8000')
+DEFAULT_SITE_URL = f'https://{RENDER_EXTERNAL_HOSTNAME}' if RENDER_EXTERNAL_HOSTNAME else 'http://127.0.0.1:8000'
+AIRGUARD_SITE_URL = os.environ.get('AIRGUARD_SITE_URL', DEFAULT_SITE_URL)
 AIRGUARD_UPLOAD_URL = os.environ.get('AIRGUARD_UPLOAD_URL', f'{AIRGUARD_SITE_URL.rstrip("/")}/api/v1/measurements/govee/')
 AIRGUARD_INGEST_TOKEN = os.environ.get('AIRGUARD_INGEST_TOKEN', '')
 AIRGUARD_POSTMARK_WEBHOOK_TOKEN = os.environ.get('AIRGUARD_POSTMARK_WEBHOOK_TOKEN', '')

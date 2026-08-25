@@ -167,22 +167,13 @@ run_production.cmd
 
 WhiteNoise serves collected, compressed, versioned static assets. Put IIS, nginx, or another TLS reverse proxy in front of `127.0.0.1:8000`; do not expose the development server. Back up `db.sqlite3` (or `DJANGO_DATABASE_PATH`) and `var\media` together, monitor disk space, and test restoration. SQLite is suitable only for this single-host, low-write deployment; move to a managed database before adding multiple web/job hosts.
 
-### Railway
+### Render
 
-Deploy the GitHub `production` branch as a Django service and add a PostgreSQL service. Set `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, and `PGPORT` to references to the matching PostgreSQL variables. The checked-in `Procfile` applies migrations, collects static assets, and starts Gunicorn on Railway's assigned `PORT`.
+Connect the checked-in `render.yaml` as a Render Blueprint. It deploys the GitHub `production` branch as a paid Starter web service, provisions paid PostgreSQL storage, attaches a 1 GB persistent disk at `/var/data`, and runs alert evaluation and delivery every 15 minutes. Render supplies the public `airguard-community-dashboard-2026.onrender.com` address and TLS certificate.
 
-Attach a volume to the web service at `/data`, then set:
+During the first Blueprint sync, enter `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, and `DEFAULT_FROM_EMAIL`. Render generates the Django, ingestion, and webhook secrets. The web service automatically uses Render's external hostname for allowed-host and CSRF validation, applies migrations before deployment, collects static assets, and checks `/health/` continuously.
 
-```text
-AIRGUARD_DATA_DIR=/data
-DJANGO_ALLOWED_HOSTS=<generated-domain>,healthcheck.railway.app
-DJANGO_CSRF_TRUSTED_ORIGINS=https://<generated-domain>
-AIRGUARD_SITE_URL=https://<generated-domain>
-```
-
-Generate the public address under the web service's Networking settings and configure `/health/` as the deployment health-check path. The volume preserves archived inbound messages and uploaded CSV files; PostgreSQL preserves application data.
-
-Create a scheduled service from the same `production` branch with `python manage.py evaluate_alerts && python manage.py send_outbox` as its start command and `*/15 * * * *` as its UTC schedule. The existing GitHub Actions workflow polls the Govee mailbox hourly and forwards attachments to the public ingestion endpoint, so it does not depend on this PC.
+The existing GitHub Actions workflow polls the Govee mailbox hourly and forwards attachments to the public ingestion endpoint, so it does not depend on this PC. Copy the generated web-service `AIRGUARD_INGEST_TOKEN` into the matching GitHub Actions secret before enabling the workflow.
 
 Create facility staff accounts with `manage.py createsuperuser` or Django admin. `/facility-notifications/` requires a staff login and is also marked `noindex`.
 
