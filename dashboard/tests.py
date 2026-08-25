@@ -152,6 +152,19 @@ class DashboardTests(TestCase):
         self.assertTrue(snapshot["is_stale"])
         self.assertIsNone(snapshot["aqi"])
 
+    def test_zero_aqi_is_displayed(self):
+        sensor = Building.objects.first().sensors.first()
+        sensor.readings.all().delete()
+        observed_at = timezone.now() - timedelta(days=30)
+        Reading.objects.bulk_create([
+            Reading(sensor=sensor, observed_at=observed_at - timedelta(hours=1), pm25=0),
+            Reading(sensor=sensor, observed_at=observed_at, pm25=0),
+        ])
+        response = self.client.get(reverse("dashboard:building", args=(sensor.building.slug,)))
+        snapshot = next(item for item in response.context["building"]["sensors"] if item["id"] == sensor.id)
+        self.assertEqual(snapshot["aqi"], 0)
+        self.assertContains(response, "<b>0</b>", html=True)
+
     def test_history_is_aggregated_and_bounded(self):
         sensor = Building.objects.first().sensors.first()
         seven_days = self.client.get(reverse("dashboard:readings_api", args=(sensor.id,)), {"range": "7d"}).json()["readings"]

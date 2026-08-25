@@ -9,7 +9,7 @@
       {% for sensor in building.sensors %}
         <button class="sensor-card" type="button" data-sensor-id="{{ sensor.id }}" data-sensor-name="{{ sensor.name }}" data-building-name="{{ building.name }}">
           <strong data-i18n="{{ sensor.placement }}">{{ sensor.name }}</strong>
-          <span class="gauge {{ sensor.category_class }}" style="--gauge-value:{% if sensor.aqi %}{{ sensor.aqi }}{% else %}0{% endif %}" aria-hidden="true"><span><b>{{ sensor.aqi|default:'—' }}</b><small>AQI</small></span></span>
+          <span class="gauge {{ sensor.category_class }}" style="--gauge-value:{{ sensor.aqi|default_if_none:0 }}" aria-hidden="true"><span><b>{{ sensor.aqi|default_if_none:'—' }}</b><small>AQI</small></span></span>
           {% if sensor.pm25 is not None %}<span><abbr title="PM2.5 is fine particle pollution small enough to travel deep into the lungs.">PM2.5</abbr> {{ sensor.pm25 }} <abbr title="Micrograms per cubic meter: the mass of particles measured in a volume of air.">µg/m³</abbr></span>{% endif %}
           <span class="sensor-status"><span class="status-dot {{ sensor.category_class }}" aria-hidden="true"></span><span data-i18n="{{ sensor.category_class }}">{{ sensor.category }}</span></span>
           {% if sensor.observed_at %}<time datetime="{{ sensor.observed_at|date:'c' }}">{% if sensor.is_stale %}<span data-i18n="lastReading">Last reading</span> {% endif %}{{ sensor.observed_at|date:'M j, g:i A' }}</time>{% endif %}
