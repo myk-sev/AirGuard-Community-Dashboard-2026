@@ -62,7 +62,7 @@ services:
     branch: production
     schedule: "*/15 * * * *"
     buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py process_govee_mail && python manage.py update_forecast_weather --ignore-errors && python manage.py evaluate_alerts && python manage.py send_outbox
+    startCommand: python manage.py send_outbox && python manage.py process_govee_mail && python manage.py update_forecast_weather --ignore-errors && python manage.py evaluate_alerts && python manage.py send_outbox
     autoDeployTrigger: checksPass
     envVars:
       - key: DATABASE_URL
